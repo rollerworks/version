@@ -1,0 +1,32 @@
+{
+    "name": "rollerworks/version",
+    "description": "Semantic versioning helper library",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Sebastiaan Stok",
+            "email": "s.stok@rollerscapes.net"
+        }
+    ],
+    "require": {
+        "php": "^7.0",
+        "composer/semver": "^1.4.2"
+    },
+    "require-dev": {
+        "symfony/phpunit-bridge": "^3.2.6"
+    },
+    "autoload": {
+        "psr-4": {
+            "Rollerworks\\Component\\Version\\": "src/"
+        },
+        "exclude-from-classmap": [
+            "tests/"
+        ]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Rollerworks\\Component\\Version\\Tests\\": "tests/"
+        }
+    }
+}
