@@ -168,7 +168,7 @@ final class Version
      *
      * Note. Using 'major' on a beta release will create a stable release
      * for that major version. Using 'stable' on an existing stable will increase
-     * minor.
+     * minor. Using 'patch' on an unstable release will increase the metaver instead.
      *
      * @param string $stability Eg. alpha, beta, rc, stable, major, minor, patch
      *
@@ -179,7 +179,7 @@ final class Version
         switch ($stability) {
             case 'patch':
                 if ($this->major > 0 && $this->metaver > 0) {
-                    throw new \InvalidArgumentException('Cannot increase patch for an unstable version.');
+                    return $this->increaseNext();
                 }
 
                 return new self($this->major, $this->minor, $this->patch + 1, 3);
