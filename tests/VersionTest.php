@@ -156,6 +156,13 @@ class VersionTest extends TestCase
             'major from 1.0' => ['1.0.0', '2.0.0', 'major'],
             'major from 2.0-beta' => ['2.0.0-beta1', '2.0.0', 'major'],
 
+            // Next
+            'new next from 0.1.0' => ['0.1.0', '0.2.0', 'next'],
+            'new next from 0.1.1' => ['0.1.1', '0.2.0', 'next'],
+            'new next from alpha' => ['1.0.0-alpha6', '1.0.0-alpha7', 'next'],
+            'new next from beta' => ['1.0.0-beta1', '1.0.0-beta2', 'next'],
+            'new next from current stable' => ['1.0.0', '1.1.0', 'next'],
+
             // Alpha
             'next alpha' => ['1.0.0-alpha1', '1.0.0-alpha2', 'alpha'],
             'new alpha' => ['1.0.0', '1.1.0-alpha1', 'alpha'],

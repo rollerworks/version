@@ -40,6 +40,7 @@ $version = Version::fromString('v1.3.2');
 
 $newVersion = $version->increase('major');  // v2.0.0
 $newVersion = $version->increase('minor');  // v1.4.0
+$newVersion = $version->increase('next');   // v1.4.0
 $newVersion = $version->increase('patch');  // v1.3.3
 $newVersion = $version->increase('stable'); // v1.4.0
 
@@ -54,6 +55,7 @@ $version = Version::fromString('v1.4.0-BETA1');
 $newVersion = $version->increase('beta');   // v1.4.0-BETA2
 $newVersion = $version->increase('rc');     // v1.4.0-RC1
 $newVersion = $version->increase('major');  // v1.4.0
+$newVersion = $version->increase('next');   // v1.4.0-BETA2
 $newVersion = $version->increase('stable'); // v1.4.0
 
 // Version validation

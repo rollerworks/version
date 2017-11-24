@@ -202,11 +202,15 @@ final class Version
             case 'stable':
                 return $this->increaseStable();
 
+            case 'next':
+                return $this->increaseNext();
+
             default:
                 throw new \InvalidArgumentException(
                     sprintf(
-                        'Unknown stability "%s", accepts "%s" '.$stability,
-                        implode('", "', ['alpha', 'beta', 'rc', 'stable', 'major', 'minor', 'patch'])
+                        'Unknown stability "%s", accepts "%s".',
+                        $stability,
+                        implode('", "', ['alpha', 'beta', 'rc', 'stable', 'major', 'next', 'minor', 'patch'])
                     )
                 );
         }
@@ -229,6 +233,15 @@ final class Version
     {
         if ($this->stability < 3) {
             return new self(max($this->major, 1), 0, 0, 3);
+        }
+
+        return new self($this->major, $this->minor + 1, 0, 3);
+    }
+
+    private function increaseNext(): Version
+    {
+        if ($this->major > 0 && $this->stability < 3) {
+            return new self($this->major, $this->minor, $this->patch, $this->stability, $this->metaver + 1);
         }
 
         return new self($this->major, $this->minor + 1, 0, 3);
