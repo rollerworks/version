@@ -143,6 +143,12 @@ class VersionTest extends TestCase
         return [
             'patch with patch 0' => ['0.1.0', '0.1.1', 'patch'],
             'patch with patch 1' => ['0.1.1', '0.1.2', 'patch'],
+            'patch with patch stable' => ['1.0.0', '1.0.1', 'patch'],
+
+            // Patch with unstable. Increase metaver instead
+            'patch with patch alpha' => ['1.0.0-alpha1', '1.0.0-alpha2', 'patch'],
+            'patch with patch beta' => ['1.0.0-beta1', '1.0.0-beta2', 'patch'],
+            'patch with patch rc' => ['1.0.0-rc1', '1.0.0-rc2', 'patch'],
 
             // Minor, patch must be reset
             'minor with patch 0' => ['0.1.0', '0.2.0', 'minor'],
@@ -196,11 +202,11 @@ class VersionTest extends TestCase
     }
 
     /** @test */
-    public function it_cannot_increases_patch_on_unstable()
+    public function it_cannot_increases_for_unsupported()
     {
         $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Cannot increase patch for an unstable version.');
+        $this->expectExceptionMessage('Unknown stability "next-stable", accepts "alpha", "beta", "rc", "stable", "major", "next", "minor", "patch".');
 
-        Version::fromString('1.0.0-beta1')->increase('patch');
+        Version::fromString('1.0.0-beta1')->increase('next-stable');
     }
 }
