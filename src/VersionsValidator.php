@@ -64,7 +64,7 @@ final class VersionsValidator
      */
     public static function isVersionContinues(array $versions, Version $new, &$possibleVersions): bool
     {
-        if (!count($versions)) {
+        if (!\count($versions)) {
             $possibleVersions = [
                 Version::fromString('0.1.0'),
                 Version::fromString('1.0.0-ALPHA1'),

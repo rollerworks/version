@@ -22,7 +22,7 @@ final class Version
      * * For historic reasons stability versions may have a hyphen or dot
      *   and is considered optional
      */
-    const VERSION_REGEX = '(?P<major>\d++)\.(?P<minor>\d++)(?:\.(?P<patch>\d++))?(?:[-.]?(?P<stability>beta|RC|alpha|stable)(?:[.-]?(?P<metaver>\d+))?)?';
+    public const VERSION_REGEX = '(?P<major>\d++)\.(?P<minor>\d++)(?:\.(?P<patch>\d++))?(?:[-.]?(?P<stability>beta|RC|alpha|stable)(?:[.-]?(?P<metaver>\d+))?)?';
 
     public $major;
     public $minor;
@@ -32,15 +32,14 @@ final class Version
     public $full;
 
     /**
-     * Stability indexes, higher means more stable.
+     * Higher means more stable.
      *
      * @var int[]
      */
-    private static $stabilises = ['alpha' => 0, 'beta' => 1, 'rc' => 2, 'stable' => 3];
+    private static $stabilityIndexes = ['alpha' => 0, 'beta' => 1, 'rc' => 2, 'stable' => 3];
 
     private function __construct(int $major, int $minor, int $patch, int $stability, int $metaver = 0)
     {
-        // A 0 major release is always
         if (0 === $major) {
             $stability = 0;
             $metaver = 1;
@@ -62,7 +61,7 @@ final class Version
                 $this->major,
                 $this->minor,
                 $this->patch,
-                strtoupper(array_search($this->stability, self::$stabilises, true)),
+                strtoupper(array_search($this->stability, self::$stabilityIndexes, true)),
                 $this->metaver
             );
         } else {
@@ -75,19 +74,17 @@ final class Version
         return $this->full;
     }
 
-    public static function fromString(string $version): Version
+    public static function fromString(string $version): self
     {
         if (preg_match('/^v?'.self::VERSION_REGEX.'$/i', $version, $matches)) {
             return new self(
                 (int) $matches['major'],
                 (int) $matches['minor'],
                 (int) ($matches['patch'] ?? 0),
-                self::$stabilises[strtolower($matches['stability'] ?? 'stable')],
+                self::$stabilityIndexes[strtolower($matches['stability'] ?? 'stable')],
                 (int) ($matches['metaver'] ?? 0)
             );
         }
-
-        // Check for 0.x-stable (really?? who does this...)
 
         throw new \InvalidArgumentException(
             sprintf(
@@ -158,7 +155,7 @@ final class Version
         return $candidates;
     }
 
-    public function equalTo(Version $second): bool
+    public function equalTo(self $second): bool
     {
         return $this->full === $second->full;
     }
@@ -174,7 +171,7 @@ final class Version
      *
      * @return Version A new version instance with the changes applied
      */
-    public function increase(string $stability): Version
+    public function increase(string $stability): self
     {
         switch ($stability) {
             case 'patch':
@@ -216,20 +213,20 @@ final class Version
         }
     }
 
-    private function increaseMetaver(string $stability): Version
+    private function increaseMetaver(string $stability): self
     {
-        if ($this->stability === self::$stabilises[$stability]) {
+        if ($this->stability === self::$stabilityIndexes[$stability]) {
             return new self($this->major, $this->minor, 0, $this->stability, $this->metaver + 1);
         }
 
-        if (self::$stabilises[$stability] > $this->stability) {
-            return new self($this->major, $this->minor, 0, self::$stabilises[$stability], 1);
+        if (self::$stabilityIndexes[$stability] > $this->stability) {
+            return new self($this->major, $this->minor, 0, self::$stabilityIndexes[$stability], 1);
         }
 
-        return new self($this->major, $this->minor + 1, 0, self::$stabilises[$stability], 1);
+        return new self($this->major, $this->minor + 1, 0, self::$stabilityIndexes[$stability], 1);
     }
 
-    private function increaseStable(): Version
+    private function increaseStable(): self
     {
         if ($this->stability < 3) {
             return new self(max($this->major, 1), 0, 0, 3);
@@ -238,7 +235,7 @@ final class Version
         return new self($this->major, $this->minor + 1, 0, 3);
     }
 
-    private function increaseNext(): Version
+    private function increaseNext(): self
     {
         if ($this->major > 0 && $this->stability < 3) {
             return new self($this->major, $this->minor, $this->patch, $this->stability, $this->metaver + 1);
