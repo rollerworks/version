@@ -1,0 +1,10 @@
+parameters:
+    level: 7
+    paths:
+        - src
+        - tests
+    autoload_files:
+        - vendor/autoload.php
+    ignoreErrors:
+    includes:
+        - vendor/phpstan/phpstan-phpunit/extension.neon

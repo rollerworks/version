@@ -9,6 +9,7 @@ branches:
 matrix:
     include:
         - php: '7.1'
+        - php: '7.2'
 
 cache:
     directories:
@@ -19,8 +20,8 @@ before_install:
     - export PATH="$PATH:$HOME/.composer/vendor/bin"
 
 install:
-    - export SYMFONY_PHPUNIT_VERSION=6.0
     - composer install --no-progress --no-suggest --ansi
 
 script:
-    - vendor/bin/simple-phpunit --verbose
+    - ./vendor/bin/phpunit --disallow-test-output --verbose
+    - ./vendor/bin/phpstan analyse
