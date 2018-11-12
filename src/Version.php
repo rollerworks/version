@@ -169,9 +169,9 @@ final class Version
      *
      * @param string $stability Eg. alpha, beta, rc, stable, major, minor, patch
      *
-     * @return Version A new version instance with the changes applied
+     * @return self A new version instance with the changes applied
      */
-    public function increase(string $stability): self
+    public function getNextIncreaseOf(string $stability): self
     {
         switch ($stability) {
             case 'patch':

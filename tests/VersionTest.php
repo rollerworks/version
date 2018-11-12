@@ -198,7 +198,7 @@ class VersionTest extends TestCase
      */
     public function it_increases_to_next_version(string $current, string $expected, $stability)
     {
-        self::assertEquals(Version::fromString($expected), Version::fromString($current)->increase($stability));
+        self::assertEquals(Version::fromString($expected), Version::fromString($current)->getNextIncreaseOf($stability));
     }
 
     /** @test */
@@ -207,6 +207,6 @@ class VersionTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Unknown stability "next-stable", accepts "alpha", "beta", "rc", "stable", "major", "next", "minor", "patch".');
 
-        Version::fromString('1.0.0-beta1')->increase('next-stable');
+        Version::fromString('1.0.0-beta1')->getNextIncreaseOf('next-stable');
     }
 }
