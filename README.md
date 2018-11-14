@@ -1,13 +1,14 @@
 Rollerworks Semver Component
 ============================
 
-Semantic Versioning helper library.
-Validation, incrementing (get next possible version(s)). 
+A small Semantic Versioning helper library.
+
+Validation Continues Versions. Finding next possible version version increments. 
 
 Requirements
 ------------
 
-You need at least PHP 7.0 
+You need at least PHP 7.1
 
 Installation
 ------------
@@ -63,34 +64,43 @@ $newVersion = $version->increase('stable'); // v1.4.0
 // Version validation
 // ... //
 
-$tags = [
-    '0.1.0',
-    'v1.0.0-beta1',
-    'v1.0.0-beta2',
-    'v1.0.0-beta6',
-    'v1.0.0-beta7',
-    '1.0.0',
-    'v1.0.1',
-    'v1.1.0',
-    'v2.0.0',
-    'v3.5-beta1',
+$existingVersions = [
+    Version::fromString('0.1.0'),
+    Version::fromString('v1.0.0-beta1'),
+    Version::fromString('v1.0.0-beta2'),
+    Version::fromString('v1.0.0-beta6'),
+    Version::fromString('v1.0.0-beta7'),
+    Version::fromString('1.0.0'),
+    Version::fromString('v1.0.1'),
+    Version::fromString('v1.1.0'),
+    Version::fromString('v2.0.0'),
+    Version::fromString('v3.5-beta1'),
 ];
 
-// Return an array with major version as key, and the highest possible
-// version for that major as Version object
-$versions = VersionsValidator::getHighestVersions($tags);
+$validator = new ContinuesVersionsValidator(...$existingVersions); // Expects the versions as a variadic arguments
+//$validator = new ContinuesVersionsValidator(); // No existing versions
 
-// [
-//     0 => Version::fromString('0.1.0'),
-//     1 => Version::fromString('1.1.0'),
-//     2 => Version::fromString('2.0.0'),
-//     3 => Version::fromString('3.5.0-beta1'),
-// ]
+VersionsValidator::isVersionContinues(Version::fromString('v1.1.1'));      // true
+VersionsValidator::isVersionContinues(Version::fromString('1.0.2'));       // true
+VersionsValidator::isVersionContinues(Version::fromString('1.1.1.'));      // true
+VersionsValidator::isVersionContinues(Version::fromString('2.0.1.'));      // true
+VersionsValidator::isVersionContinues(Version::fromString('3.5.0-beta2')); // true
+VersionsValidator::isVersionContinues(Version::fromString('3.5.0'));       // true
 
-// $possibleVersions is a returning reference holding a list of acceptable versions
-VersionsValidator::isVersionContinues($versions, Version::fromString('v0.2.0'), $possibleVersions); // true
-VersionsValidator::isVersionContinues($versions, Version::fromString('v0.1.1'), $possibleVersions); // true
-VersionsValidator::isVersionContinues($versions, Version::fromString('v1.3.2'), $possibleVersions); // false
+// A new minor or major version is not considered acceptable when there are already higher
+// versions. Only patch releases are accepted then.
+VersionsValidator::isVersionContinues(Version::fromString('0.2.0'));        // false
+VersionsValidator::isVersionContinues(Version::fromString('v1.0.0-beta8')); // false
+VersionsValidator::isVersionContinues(Version::fromString('v1.2'));         // false
+VersionsValidator::isVersionContinues(Version::fromString('v2.1'));         // false
+VersionsValidator::isVersionContinues(Version::fromString('v3.5-alpha1'));  // false
+VersionsValidator::isVersionContinues(Version::fromString('v3.5-beta3'));   // false
+VersionsValidator::isVersionContinues(Version::fromString('v3.6'));         // false
+
+// A list of possible versions with respect to the major.minor bounds of any existing version
+// For higher major.minor versions then validated only suggests a patch release, otherwise
+// all possible increments till the next stable major are suggested.
+$possibleVersions = $validator->getPossibleVersions();
 ```
 
 Versioning

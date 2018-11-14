@@ -29,11 +29,22 @@ final class Version
      */
     public const VERSION_REGEX = '(?P<major>\d++)\.(?P<minor>\d++)(?:\.(?P<patch>\d++))?(?:[-.]?(?P<stability>beta|RC|alpha|stable)(?:[.-]?(?P<metaver>\d+))?)?';
 
+    /** @var int */
     public $major;
+
+    /** @var int */
     public $minor;
+
+    /** @var int */
     public $patch;
+
+    /** @var int */
     public $stability;
+
+    /** @var int */
     public $metaver;
+
+    /** @var string */
     public $full;
 
     /**
