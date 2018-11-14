@@ -31,6 +31,7 @@ return PhpCsFixer\Config::create()
         'ordered_imports' => true,
         'phpdoc_annotation_without_dot' => true,
         'phpdoc_order' => true,
+        'native_function_invocation' => false,
 
         // This breaks for variable @var blocks
         'phpdoc_to_comment' => false,

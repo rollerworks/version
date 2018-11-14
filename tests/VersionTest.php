@@ -118,8 +118,11 @@ class VersionTest extends TestCase
         return [
             'alpha 0' => ['0.1.0', ['0.1.1', '0.2.0', '1.0.0-BETA1', '1.0.0']],
             'beta' => ['1.0.0-beta-5', ['1.0.0-BETA6', '1.0.0-RC1', '1.0.0']],
+            'beta 2' => ['2.0.0-beta-5', ['2.0.0-BETA6', '2.0.0-RC1', '2.0.0']],
+            'beta 3' => ['v3.5-beta1', ['v3.5-beta2', 'v3.5-RC1', 'v3.5']],
             'rc' => ['1.0.0-RC5', ['1.0.0-RC6', '1.0.0']],
             'stable major' => ['1.0.0', ['1.0.1', '1.1.0-BETA1', '1.1.0', '2.0.0-ALPHA1', '2.0.0-BETA1', '2.0.0']],
+            'stable major 2' => ['2.0.0', ['2.0.1', '2.1.0-BETA1', '2.1.0', '3.0.0-ALPHA1', '3.0.0-BETA1', '3.0.0']],
             'stable with minor' => ['1.1.0', ['1.1.1', '1.2.0-BETA1', '1.2.0', '2.0.0-ALPHA1', '2.0.0-BETA1', '2.0.0']],
             'stable with minor and patch' => ['1.1.1', ['1.1.2', '1.2.0-BETA1', '1.2.0', '2.0.0-ALPHA1', '2.0.0-BETA1', '2.0.0']],
             'stable with patch' => ['1.0.1', ['1.0.2', '1.1.0-BETA1', '1.1.0', '2.0.0-ALPHA1', '2.0.0-BETA1', '2.0.0']],
@@ -198,7 +201,7 @@ class VersionTest extends TestCase
      */
     public function it_increases_to_next_version(string $current, string $expected, $stability)
     {
-        self::assertEquals(Version::fromString($expected), Version::fromString($current)->increase($stability));
+        self::assertEquals(Version::fromString($expected), Version::fromString($current)->getNextIncreaseOf($stability));
     }
 
     /** @test */
@@ -207,6 +210,6 @@ class VersionTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Unknown stability "next-stable", accepts "alpha", "beta", "rc", "stable", "major", "next", "minor", "patch".');
 
-        Version::fromString('1.0.0-beta1')->increase('next-stable');
+        Version::fromString('1.0.0-beta1')->getNextIncreaseOf('next-stable');
     }
 }
