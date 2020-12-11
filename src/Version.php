@@ -50,7 +50,7 @@ final class Version
     /**
      * Higher means more stable.
      *
-     * @var int[]
+     * @var array<string,int>
      */
     private static $stabilityIndexes = [
         'alpha' => self::STABILITY_ALPHA,
@@ -81,7 +81,7 @@ final class Version
                 $this->major,
                 $this->minor,
                 $this->patch,
-                strtoupper(array_search($this->stability, self::$stabilityIndexes, true)),
+                strtoupper(array_search($this->stability, self::$stabilityIndexes, true)), /** @phpstan-ignore-line */
                 $this->metaver
             );
         } else {

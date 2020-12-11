@@ -19,6 +19,9 @@ use Rollerworks\Component\Version\Version;
 
 class ContinuesVersionsValidatorTest extends TestCase
 {
+    /**
+     * @return array<int, string[]>
+     */
     public function provideInitialContinuesVersions(): iterable
     {
         yield ['0.1.0'];
@@ -31,7 +34,7 @@ class ContinuesVersionsValidatorTest extends TestCase
      * @test
      * @dataProvider provideInitialContinuesVersions
      */
-    public function it_accepts_a_continues_version_with_no_pre_existing(string $new)
+    public function it_accepts_a_continues_version_with_no_pre_existing(string $new): void
     {
         $validator = new ContinuesVersionsValidator();
 
@@ -47,6 +50,9 @@ class ContinuesVersionsValidatorTest extends TestCase
         );
     }
 
+    /**
+     * @return array<string, array<int, string[]|string>>
+     */
     public function provideContinuesVersions(): iterable
     {
         yield 'unstable #1' => ['0.3', ['0.2', '0.1'], ['0.2.1', '0.3', '1.0-BETA1', '1.0']];
@@ -63,8 +69,11 @@ class ContinuesVersionsValidatorTest extends TestCase
     /**
      * @test
      * @dataProvider provideContinuesVersions
+     *
+     * @param array<int, string> $existing
+     * @param array<int, string> $possible
      */
-    public function it_accepts_a_continues_version(string $new, array $existing, array $possible)
+    public function it_accepts_a_continues_version(string $new, array $existing, array $possible): void
     {
         $validator = new ContinuesVersionsValidator(...$this->createVersions($existing));
 
@@ -72,6 +81,11 @@ class ContinuesVersionsValidatorTest extends TestCase
         self::assertEquals($this->createVersions($possible), array_merge([], $validator->getPossibleVersions()));
     }
 
+    /**
+     * @param array<int, string> $existing
+     *
+     * @return array<int, Version>
+     */
     private function createVersions(array $existing): array
     {
         return array_map(
@@ -82,6 +96,9 @@ class ContinuesVersionsValidatorTest extends TestCase
         );
     }
 
+    /**
+     * @return array<int, string[]>
+     */
     public function provideNotInitialContinuesVersions(): iterable
     {
         yield ['0.2.0'];
@@ -95,7 +112,7 @@ class ContinuesVersionsValidatorTest extends TestCase
      * @test
      * @dataProvider provideNotInitialContinuesVersions
      */
-    public function it_rejects_non_continues_version_with_no_pre_existing(string $new)
+    public function it_rejects_non_continues_version_with_no_pre_existing(string $new): void
     {
         $validator = new ContinuesVersionsValidator();
 
@@ -111,6 +128,9 @@ class ContinuesVersionsValidatorTest extends TestCase
         );
     }
 
+    /**
+     * @return array<string, array<int, string[]|string>>
+     */
     public function provideNonContinuesVersions(): iterable
     {
         yield 'unstable #1' => ['0.5', ['0.2', '0.1'], ['0.2.1', '0.3', '1.0-BETA1', '1.0']];
@@ -127,8 +147,11 @@ class ContinuesVersionsValidatorTest extends TestCase
     /**
      * @test
      * @dataProvider provideNonContinuesVersions
+     *
+     * @param array<int, string> $existing
+     * @param array<int, string> $possible
      */
-    public function it_rejects_non_continues_version(string $new, array $existing, array $possible)
+    public function it_rejects_non_continues_version(string $new, array $existing, array $possible): void
     {
         $validator = new ContinuesVersionsValidator(...$this->createVersions($existing));
 

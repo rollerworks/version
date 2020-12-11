@@ -19,7 +19,7 @@ use Rollerworks\Component\Version\Version;
 class VersionTest extends TestCase
 {
     /** @test */
-    public function it_creates_from_full_string()
+    public function it_creates_from_full_string(): void
     {
         $version = Version::fromString('1.0.0-beta-5');
 
@@ -33,7 +33,7 @@ class VersionTest extends TestCase
     }
 
     /** @test */
-    public function it_creates_with_explicit_stable()
+    public function it_creates_with_explicit_stable(): void
     {
         $version = Version::fromString('1.0.0-stable');
 
@@ -47,7 +47,7 @@ class VersionTest extends TestCase
     }
 
     /** @test */
-    public function it_creates_without_patch()
+    public function it_creates_without_patch(): void
     {
         $version = Version::fromString('1.0');
 
@@ -60,6 +60,9 @@ class VersionTest extends TestCase
         self::assertEquals('1.0.0', (string) $version);
     }
 
+    /**
+     * @return array<string,string[]>
+     */
     public function provideValidFormats(): array
     {
         return [
@@ -77,7 +80,7 @@ class VersionTest extends TestCase
      * @test
      * @dataProvider provideValidFormats
      */
-    public function it_supports_various_formats(string $version, string $expectedOutput)
+    public function it_supports_various_formats(string $version, string $expectedOutput): void
     {
         $version = Version::fromString($version);
 
@@ -85,7 +88,7 @@ class VersionTest extends TestCase
     }
 
     /** @test */
-    public function it_compares_two_versions_are_equal()
+    public function it_compares_two_versions_are_equal(): void
     {
         $version = Version::fromString('1.0.0-beta-5');
         $version2 = Version::fromString('1.0.0-beta5');
@@ -96,7 +99,7 @@ class VersionTest extends TestCase
     }
 
     /** @test */
-    public function it_fails_for_invalid_format()
+    public function it_fails_for_invalid_format(): void
     {
         $this->expectException('InvalidArgumentException');
         $this->expectExceptionMessage('Unable to parse version "1.0.0-WAT"');
@@ -105,7 +108,7 @@ class VersionTest extends TestCase
     }
 
     /** @test */
-    public function it_fails_with_stable_plus_metaver()
+    public function it_fails_with_stable_plus_metaver(): void
     {
         $this->expectException('InvalidArgumentException');
         $this->expectExceptionMessage('Meta version of the stability flag cannot be set for stable.');
@@ -113,6 +116,9 @@ class VersionTest extends TestCase
         Version::fromString('1.0.0-stable-5');
     }
 
+    /**
+     * @return array<string,array<int, array<int, string>|string>>>
+     */
     public function provideExpectedNextVersionCandidates(): array
     {
         return [
@@ -132,8 +138,10 @@ class VersionTest extends TestCase
     /**
      * @test
      * @dataProvider provideExpectedNextVersionCandidates
+     *
+     * @param array<int, string> $expected
      */
-    public function it_provides_next_version_candidates($current, $expected)
+    public function it_provides_next_version_candidates(string $current, array $expected): void
     {
         $candidates = Version::fromString($current)->getNextVersionCandidates();
         $expected = array_map([Version::class, 'fromString'], $expected);
@@ -141,6 +149,9 @@ class VersionTest extends TestCase
         self::assertEquals($expected, $candidates);
     }
 
+    /**
+     * @return array<string,string[]>
+     */
     public function provideExpectedIncreasedVersion(): array
     {
         return [
@@ -199,13 +210,13 @@ class VersionTest extends TestCase
      * @test
      * @dataProvider provideExpectedIncreasedVersion
      */
-    public function it_increases_to_next_version(string $current, string $expected, $stability)
+    public function it_increases_to_next_version(string $current, string $expected, string $stability): void
     {
         self::assertEquals(Version::fromString($expected), Version::fromString($current)->getNextIncreaseOf($stability));
     }
 
     /** @test */
-    public function it_cannot_increases_for_unsupported()
+    public function it_cannot_increases_for_unsupported(): void
     {
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Unknown stability "next-stable", accepts "alpha", "beta", "rc", "stable", "major", "next", "minor", "patch".');
