@@ -106,7 +106,10 @@ final class ContinuesVersionsValidator
         $this->possibleVersions = $version->getNextVersionCandidates();
     }
 
-    private function getLastArrayIndex(array $array)
+    /**
+     * @param array<int, mixed> $array
+     */
+    private function getLastArrayIndex(array $array): int
     {
         end($array);
 
