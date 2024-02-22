@@ -63,7 +63,7 @@ class ContinuesVersionsValidatorTest extends TestCase
         yield 'unstable #6' => ['1.0-BETA1', ['0.2', '0.1'], ['0.2.1', '0.3', '1.0-BETA1', '1.0']];
 
         yield 'stable #1' => ['1.2', ['1.0', '1.1'], ['1.1.1', '1.2-BETA1', '1.2', '2.0-ALPHA1', '2.0-BETA1', '2.0']];
-        yield 'stable #2' => ['1.1.1', ['1.1', '2.0'], ['1.1.1']];
+        yield 'stable #2' => ['1.1.1', ['1.1', '2.0'], ['1.1.1', '1.2.0']];
     }
 
     /**
@@ -77,7 +77,7 @@ class ContinuesVersionsValidatorTest extends TestCase
     {
         $validator = new ContinuesVersionsValidator(...$this->createVersions($existing));
 
-        self::assertTrue($validator->isContinues(Version::fromString($new)));
+        self::assertTrue($validator->isContinues(Version::fromString($new)), sprintf('Excepts instead %s', implode(',', $validator->getPossibleVersions())));
         self::assertEquals($this->createVersions($possible), array_merge([], $validator->getPossibleVersions()));
     }
 
@@ -129,7 +129,7 @@ class ContinuesVersionsValidatorTest extends TestCase
     }
 
     /**
-     * @return array<string, array<int, string[]|string>>
+     * @return iterable<string, array<int, string[]|string>>
      */
     public function provideNonContinuesVersions(): iterable
     {
@@ -142,6 +142,7 @@ class ContinuesVersionsValidatorTest extends TestCase
 
         yield 'stable #1' => ['1.3', ['1.0', '1.1'], ['1.1.1', '1.2-BETA1', '1.2', '2.0-ALPHA1', '2.0-BETA1', '2.0']];
         yield 'stable #2' => ['3.6', ['v3.5-beta1'], ['v3.5-beta2', 'v3.5-RC1', 'v3.5']];
+        yield 'stable #3 ' => ['3.6', ['v3.4', 'v3.7'], ['3.7.1', '3.8.0-BETA1', '3.8.0', '4.0.0-ALPHA1', '4.0.0-BETA1', '4.0.0']];
     }
 
     /**

@@ -167,6 +167,7 @@ class VersionTest extends TestCase
             // Minor, patch must be reset
             'minor with patch 0' => ['0.1.0', '0.2.0', 'minor'],
             'minor with patch 1' => ['0.1.1', '0.2.0', 'minor'],
+            'minor with new minor' => ['1.1.2', '1.2.0', 'minor'],
 
             // Major, minor and patch must be reset
             'major.0.0' => ['0.1.0', '1.0.0', 'major'],

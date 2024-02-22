@@ -116,10 +116,14 @@ final class ContinuesVersionsValidator
         return key($array);
     }
 
-    private function hasNewerVersionsAfter(int $major, int $minor): bool
+    private function hasNewerMajorVersionsAfter(int $major): bool
     {
-        return $this->getLastArrayIndex($this->resolveVersions) > $major ||
-               $this->getLastArrayIndex($this->resolveVersions[$major]) > $minor;
+        return $this->getLastArrayIndex($this->resolveVersions) > $major;
+    }
+
+    private function hasNewerMinorVersionsAfter(int $major, int $minor): bool
+    {
+        return $this->getLastArrayIndex($this->resolveVersions[$major]) > $minor;
     }
 
     private function computePossibleVersionsFromMinor(int $major, int $minor): void
@@ -127,8 +131,14 @@ final class ContinuesVersionsValidator
         /** @var Version $version */
         $version = $this->resolveVersions[$major][$minor];
 
-        if ($this->hasNewerVersionsAfter($major, $minor)) {
+        if ($this->hasNewerMinorVersionsAfter($major, $minor)) {
             $this->possibleVersions = [$version->getNextIncreaseOf('patch')];
+
+            return;
+        }
+
+        if ($this->hasNewerMajorVersionsAfter($major)) {
+            $this->possibleVersions = [$version->getNextIncreaseOf('patch'), $version->getNextIncreaseOf('minor')];
 
             return;
         }
