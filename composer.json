@@ -13,10 +13,10 @@
         "php": "^7.1|^8.0"
     },
      "require-dev": {
-         "phpunit/phpunit": "^7.3.2|^8.5.12",
+         "phpunit/phpunit": "^7.3.2|^8.5.12|^9.6",
          "phpstan/phpstan": "^0.12.33",
          "phpstan/phpstan-phpunit": "^0.12.13",
-         "symfony/phpunit-bridge": "^5.2"
+         "symfony/phpunit-bridge": "^5.2 || ^6.4"
      },
     "autoload": {
         "psr-4": {
