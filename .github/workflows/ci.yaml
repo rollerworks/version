@@ -10,7 +10,7 @@ on:
 jobs:
     test:
         name: PHP ${{ matrix.php-versions }}
-        runs-on: ubuntu-18.04
+        runs-on: 'ubuntu-latest'
         strategy:
             fail-fast: false
             matrix:
@@ -21,14 +21,14 @@ jobs:
             # https://github.com/actions/checkout (official)
             -
                 name: Checkout
-                uses: actions/checkout@v2
+                uses: actions/checkout@v4
 
             # https://github.com/shivammathur/setup-php (community)
             -
                 name: Setup PHP and composer with shivammathur/setup-php
                 uses: shivammathur/setup-php@v2
                 with:
-                    php-version: ${{ matrix.php-versions }}
+                    php-version: '${{ matrix.php-versions }}'
                     coverage: none
 
             # —— Composer 🧙‍️ —————————————————————————————————————————————————————————
@@ -42,13 +42,13 @@ jobs:
                 run: vendor/bin/phpunit --disallow-test-output --verbose
     phpstan:
         name: PHPStan
-        runs-on: ubuntu-latest
+        runs-on: 'ubuntu-latest'
         strategy:
             fail-fast: false
         steps:
             -
                 name: Checkout
-                uses: actions/checkout@v2
+                uses: actions/checkout@v4
 
             # https://github.com/shivammathur/setup-php (community)
             -
