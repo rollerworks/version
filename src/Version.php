@@ -257,15 +257,20 @@ final class Version
             return new self($this->major, $this->minor, 0, self::$stabilityIndexes[$stability], 1);
         }
 
+        // Lower stability than current.
         return new self($this->major, $this->minor + 1, 0, self::$stabilityIndexes[$stability], 1);
     }
 
     private function getIncreaseOfStable(): self
     {
-        if ($this->stability < self::STABILITY_STABLE) {
-            return new self(max($this->major, 1), 0, 0, self::STABILITY_STABLE);
+        if ($this->stability === self::STABILITY_STABLE) {
+            return new self($this->major, $this->minor + 1, 0, self::STABILITY_STABLE);
         }
 
-        return new self($this->major, $this->minor + 1, 0, self::STABILITY_STABLE);
+        if ($this->major === 0) {
+            return new self(1, 0, 0, self::STABILITY_STABLE);
+        }
+
+        return new self($this->major, $this->minor, 0, self::STABILITY_STABLE);
     }
 }

@@ -181,6 +181,7 @@ class VersionTest extends TestCase
             'new next from 0.1.0' => ['0.1.0', '0.2.0', 'next'],
             'new next from 0.1.1' => ['0.1.1', '0.2.0', 'next'],
             'new next from alpha' => ['1.0.0-alpha6', '1.0.0-alpha7', 'next'],
+            'new next from alpha 2' => ['1.2.0-alpha6', '1.2.0-alpha7', 'next'],
             'new next from beta' => ['1.0.0-beta1', '1.0.0-beta2', 'next'],
             'new next from current stable' => ['1.0.0', '1.1.0', 'next'],
 
@@ -203,6 +204,7 @@ class VersionTest extends TestCase
             'new stable from 0.0' => ['0.1.0', '1.0.0', 'stable'],
             'new stable from alpha' => ['1.0.0-alpha6', '1.0.0', 'stable'],
             'new stable from beta' => ['1.0.0-beta1', '1.0.0', 'stable'],
+            'new stable from beta 2' => ['1.2.0-beta1', '1.2.0', 'stable'],
             'new stable from current stable' => ['1.0.0', '1.1.0', 'stable'],
         ];
     }
