@@ -16,6 +16,9 @@ namespace Rollerworks\Component\Version\Tests;
 use PHPUnit\Framework\TestCase;
 use Rollerworks\Component\Version\Version;
 
+/**
+ * @internal
+ */
 class VersionTest extends TestCase
 {
     /** @test */
@@ -60,9 +63,7 @@ class VersionTest extends TestCase
         self::assertEquals('1.0.0', (string) $version);
     }
 
-    /**
-     * @return array<string,string[]>
-     */
+    /** @return array<string,string[]> */
     public static function provideValidFormats(): array
     {
         return [
@@ -77,8 +78,9 @@ class VersionTest extends TestCase
     }
 
     /**
-     * @test
      * @dataProvider provideValidFormats
+     *
+     * @test
      */
     public function it_supports_various_formats(string $version, string $expectedOutput): void
     {
@@ -116,9 +118,7 @@ class VersionTest extends TestCase
         Version::fromString('1.0.0-stable-5');
     }
 
-    /**
-     * @return array<string, array<int, array<int, string>|string>>>
-     */
+    /** @return array<string, array<int, array<int, string>|string>>> */
     public static function provideExpectedNextVersionCandidates(): array
     {
         return [
@@ -136,10 +136,11 @@ class VersionTest extends TestCase
     }
 
     /**
-     * @test
      * @dataProvider provideExpectedNextVersionCandidates
      *
      * @param array<int, string> $expected
+     *
+     * @test
      */
     public function it_provides_next_version_candidates(string $current, array $expected): void
     {
@@ -149,9 +150,7 @@ class VersionTest extends TestCase
         self::assertEquals($expected, $candidates);
     }
 
-    /**
-     * @return array<string,string[]>
-     */
+    /** @return array<string,string[]> */
     public static function provideExpectedIncreasedVersion(): array
     {
         return [
@@ -210,8 +209,9 @@ class VersionTest extends TestCase
     }
 
     /**
-     * @test
      * @dataProvider provideExpectedIncreasedVersion
+     *
+     * @test
      */
     public function it_increases_to_next_version(string $current, string $expected, string $stability): void
     {

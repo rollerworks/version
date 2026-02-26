@@ -13,8 +13,6 @@ declare(strict_types=1);
 
 namespace Rollerworks\Component\Version;
 
-use function count;
-
 final class ContinuesVersionsValidator
 {
     /** @var Version[] */
@@ -33,7 +31,7 @@ final class ContinuesVersionsValidator
 
     public function isContinues(Version $new): bool
     {
-        if (count($this->versions) === 0) {
+        if (\count($this->versions) === 0) {
             $this->possibleVersions = [
                 Version::fromString('0.1.0'),
                 Version::fromString('1.0.0-ALPHA1'),
@@ -53,9 +51,7 @@ final class ContinuesVersionsValidator
         return false;
     }
 
-    /**
-     * @return Version[]
-     */
+    /** @return Version[] */
     public function getPossibleVersions(): array
     {
         return $this->possibleVersions;
@@ -68,13 +64,13 @@ final class ContinuesVersionsValidator
         $major = $new->major;
         $minor = $new->minor;
 
-        if (!isset($this->resolveVersions[$major])) {
+        if (! isset($this->resolveVersions[$major])) {
             $this->computePossibleVersionsFromLastExisting();
 
             return;
         }
 
-        if (!isset($this->resolveVersions[$major][$minor])) {
+        if (! isset($this->resolveVersions[$major][$minor])) {
             $minor = $this->getLastArrayIndex($this->resolveVersions[$major]);
         }
 
@@ -83,7 +79,7 @@ final class ContinuesVersionsValidator
 
     private function arrangeExistingVersions(): void
     {
-        usort($this->versions, function (Version $a, Version $b) {
+        usort($this->versions, static function (Version $a, Version $b) {
             return version_compare(strtolower($a->full), strtolower($b->full), '<') ? -1 : 1;
         });
 
@@ -106,9 +102,7 @@ final class ContinuesVersionsValidator
         $this->possibleVersions = $version->getNextVersionCandidates();
     }
 
-    /**
-     * @param array<int, mixed> $array
-     */
+    /** @param array<int, mixed> $array */
     private function getLastArrayIndex(array $array): int
     {
         end($array);

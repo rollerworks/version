@@ -23,7 +23,11 @@ $config
     ->setRules(
         array_merge(
             require __DIR__ . '/vendor/rollerscapes/standards/php-cs-fixer-rules.php',
-            ['header_comment' => ['header' => $header]])
+            [
+                'header_comment' => ['header' => $header],
+                'mb_str_functions' => false,
+                'php_unit_test_annotation' => ['style' => 'annotation'], // For now
+            ])
     )
     ->setFinder($finder);
 
