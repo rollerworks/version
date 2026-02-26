@@ -17,12 +17,13 @@ use PHPUnit\Framework\TestCase;
 use Rollerworks\Component\Version\ContinuesVersionsValidator;
 use Rollerworks\Component\Version\Version;
 
+/**
+ * @internal
+ */
 class ContinuesVersionsValidatorTest extends TestCase
 {
-    /**
-     * @return array<int, string[]>
-     */
-    public function provideInitialContinuesVersions(): iterable
+    /** @return iterable<int, string[]> */
+    public static function provideInitialContinuesVersions(): iterable
     {
         yield ['0.1.0'];
         yield ['1.0-ALPHA1'];
@@ -31,8 +32,9 @@ class ContinuesVersionsValidatorTest extends TestCase
     }
 
     /**
-     * @test
      * @dataProvider provideInitialContinuesVersions
+     *
+     * @test
      */
     public function it_accepts_a_continues_version_with_no_pre_existing(string $new): void
     {
@@ -50,10 +52,8 @@ class ContinuesVersionsValidatorTest extends TestCase
         );
     }
 
-    /**
-     * @return array<string, array<int, string[]|string>>
-     */
-    public function provideContinuesVersions(): iterable
+    /** @return iterable<string, array<int, string[]|string>> */
+    public static function provideContinuesVersions(): iterable
     {
         yield 'unstable #1' => ['0.3', ['0.2', '0.1'], ['0.2.1', '0.3', '1.0-BETA1', '1.0']];
         yield 'unstable #2' => ['0.2.1', ['0.2', '0.1'], ['0.2.1', '0.3', '1.0-BETA1', '1.0']];
@@ -67,17 +67,18 @@ class ContinuesVersionsValidatorTest extends TestCase
     }
 
     /**
-     * @test
      * @dataProvider provideContinuesVersions
      *
      * @param array<int, string> $existing
      * @param array<int, string> $possible
+     *
+     * @test
      */
     public function it_accepts_a_continues_version(string $new, array $existing, array $possible): void
     {
         $validator = new ContinuesVersionsValidator(...$this->createVersions($existing));
 
-        self::assertTrue($validator->isContinues(Version::fromString($new)), sprintf('Excepts instead %s', implode(',', $validator->getPossibleVersions())));
+        self::assertTrue($validator->isContinues(Version::fromString($new)), \sprintf('Excepts instead %s', implode(',', $validator->getPossibleVersions())));
         self::assertEquals($this->createVersions($possible), array_merge([], $validator->getPossibleVersions()));
     }
 
@@ -89,17 +90,15 @@ class ContinuesVersionsValidatorTest extends TestCase
     private function createVersions(array $existing): array
     {
         return array_map(
-            function (string $version) {
+            static function (string $version) {
                 return Version::fromString($version);
             },
             $existing
         );
     }
 
-    /**
-     * @return array<int, string[]>
-     */
-    public function provideNotInitialContinuesVersions(): iterable
+    /** @return iterable<int, string[]> */
+    public static function provideNotInitialContinuesVersions(): iterable
     {
         yield ['0.2.0'];
         yield ['2.0-ALPHA1'];
@@ -109,8 +108,9 @@ class ContinuesVersionsValidatorTest extends TestCase
     }
 
     /**
-     * @test
      * @dataProvider provideNotInitialContinuesVersions
+     *
+     * @test
      */
     public function it_rejects_non_continues_version_with_no_pre_existing(string $new): void
     {
@@ -128,10 +128,8 @@ class ContinuesVersionsValidatorTest extends TestCase
         );
     }
 
-    /**
-     * @return iterable<string, array<int, string[]|string>>
-     */
-    public function provideNonContinuesVersions(): iterable
+    /** @return iterable<string, array<int, string[]|string>> */
+    public static function provideNonContinuesVersions(): iterable
     {
         yield 'unstable #1' => ['0.5', ['0.2', '0.1'], ['0.2.1', '0.3', '1.0-BETA1', '1.0']];
         yield 'unstable #2' => ['0.2.4', ['0.2', '0.1'], ['0.2.1', '0.3', '1.0-BETA1', '1.0']];
@@ -146,11 +144,12 @@ class ContinuesVersionsValidatorTest extends TestCase
     }
 
     /**
-     * @test
      * @dataProvider provideNonContinuesVersions
      *
      * @param array<int, string> $existing
      * @param array<int, string> $possible
+     *
+     * @test
      */
     public function it_rejects_non_continues_version(string $new, array $existing, array $possible): void
     {

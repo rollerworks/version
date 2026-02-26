@@ -61,7 +61,7 @@ final class Version
 
     private function __construct(int $major, int $minor, int $patch, int $stability, int $metaver = 0)
     {
-        if (0 === $major) {
+        if ($major === 0) {
             $stability = self::STABILITY_ALPHA;
         }
 
@@ -71,12 +71,12 @@ final class Version
         $this->stability = $stability;
         $this->metaver = $metaver;
 
-        if (self::STABILITY_STABLE === $stability && $this->metaver > 0) {
+        if ($stability === self::STABILITY_STABLE && $this->metaver > 0) {
             throw new \InvalidArgumentException('Meta version of the stability flag cannot be set for stable.');
         }
 
         if ($major > 0 && $stability < self::STABILITY_STABLE) {
-            $this->full = sprintf(
+            $this->full = \sprintf(
                 '%d.%d.%d-%s%d',
                 $this->major,
                 $this->minor,
@@ -85,7 +85,7 @@ final class Version
                 $this->metaver
             );
         } else {
-            $this->full = sprintf('%d.%d.%d', $this->major, $this->minor, $this->patch);
+            $this->full = \sprintf('%d.%d.%d', $this->major, $this->minor, $this->patch);
         }
     }
 
@@ -96,7 +96,7 @@ final class Version
 
     public static function fromString(string $version): self
     {
-        if (preg_match('/^v?'.self::VERSION_REGEX.'$/i', $version, $matches)) {
+        if (preg_match('/^v?' . self::VERSION_REGEX . '$/i', $version, $matches)) {
             return new self(
                 (int) $matches['major'],
                 (int) $matches['minor'],
@@ -107,8 +107,8 @@ final class Version
         }
 
         throw new \InvalidArgumentException(
-            sprintf(
-                'Unable to parse version "%s" Expects an SemVer compatible version without build-metadata. '.
+            \sprintf(
+                'Unable to parse version "%s" Expects an SemVer compatible version without build-metadata. ' .
                 'Either "1.0.0", "1.0", "1.0" or "1.0.0-beta1", "1.0.0-beta-1"',
                 $version
             )
@@ -134,7 +134,7 @@ final class Version
         // Pre first-stable, so 0.x-[rc,beta,stable] releases are not considered.
         // Use alpha as stability with metaver 1, 0.2-alpha2 is simple ignored.
         // If anyone really uses this... not our problem :)
-        if (0 === $this->major) {
+        if ($this->major === 0) {
             $candidates[] = $this->getNextIncreaseOf('patch');
             $candidates[] = $this->getNextIncreaseOf('minor');
             $candidates[] = self::fromString('1.0.0-BETA1');
@@ -220,7 +220,7 @@ final class Version
 
             default:
                 throw new \InvalidArgumentException(
-                    sprintf(
+                    \sprintf(
                         'Unknown stability "%s", accepts "%s".',
                         $stability,
                         implode('", "', ['alpha', 'beta', 'rc', 'stable', 'major', 'next', 'minor', 'patch'])
