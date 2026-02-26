@@ -1,9 +1,12 @@
 includes:
-    - vendor/phpstan/phpstan-phpunit/extension.neon
+    - vendor/rollerscapes/standards/phpstan.neon
+    - phpstan-baseline.neon
 
 parameters:
-    level: 7
+    #reportUnmatchedIgnoredErrors: false
+
     paths:
-        - src
-        - tests
-    ignoreErrors:
+        - ./src
+        - ./tests
+
+    #ignoreErrors:

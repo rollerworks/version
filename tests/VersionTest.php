@@ -63,7 +63,7 @@ class VersionTest extends TestCase
     /**
      * @return array<string,string[]>
      */
-    public function provideValidFormats(): array
+    public static function provideValidFormats(): array
     {
         return [
             'with prefix in lowercase' => ['v1.0.0', '1.0.0'],
@@ -117,9 +117,9 @@ class VersionTest extends TestCase
     }
 
     /**
-     * @return array<string,array<int, array<int, string>|string>>>
+     * @return array<string, array<int, array<int, string>|string>>>
      */
-    public function provideExpectedNextVersionCandidates(): array
+    public static function provideExpectedNextVersionCandidates(): array
     {
         return [
             'alpha 0' => ['0.1.0', ['0.1.1', '0.2.0', '1.0.0-BETA1', '1.0.0']],
@@ -152,7 +152,7 @@ class VersionTest extends TestCase
     /**
      * @return array<string,string[]>
      */
-    public function provideExpectedIncreasedVersion(): array
+    public static function provideExpectedIncreasedVersion(): array
     {
         return [
             'patch with patch 0' => ['0.1.0', '0.1.1', 'patch'],

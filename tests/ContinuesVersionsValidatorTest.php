@@ -20,9 +20,9 @@ use Rollerworks\Component\Version\Version;
 class ContinuesVersionsValidatorTest extends TestCase
 {
     /**
-     * @return array<int, string[]>
+     * @return iterable<int, string[]>
      */
-    public function provideInitialContinuesVersions(): iterable
+    public static function provideInitialContinuesVersions(): iterable
     {
         yield ['0.1.0'];
         yield ['1.0-ALPHA1'];
@@ -51,9 +51,9 @@ class ContinuesVersionsValidatorTest extends TestCase
     }
 
     /**
-     * @return array<string, array<int, string[]|string>>
+     * @return iterable<string, array<int, string[]|string>>
      */
-    public function provideContinuesVersions(): iterable
+    public static function provideContinuesVersions(): iterable
     {
         yield 'unstable #1' => ['0.3', ['0.2', '0.1'], ['0.2.1', '0.3', '1.0-BETA1', '1.0']];
         yield 'unstable #2' => ['0.2.1', ['0.2', '0.1'], ['0.2.1', '0.3', '1.0-BETA1', '1.0']];
@@ -97,9 +97,9 @@ class ContinuesVersionsValidatorTest extends TestCase
     }
 
     /**
-     * @return array<int, string[]>
+     * @return iterable<int, string[]>
      */
-    public function provideNotInitialContinuesVersions(): iterable
+    public static function provideNotInitialContinuesVersions(): iterable
     {
         yield ['0.2.0'];
         yield ['2.0-ALPHA1'];
@@ -131,7 +131,7 @@ class ContinuesVersionsValidatorTest extends TestCase
     /**
      * @return iterable<string, array<int, string[]|string>>
      */
-    public function provideNonContinuesVersions(): iterable
+    public static function provideNonContinuesVersions(): iterable
     {
         yield 'unstable #1' => ['0.5', ['0.2', '0.1'], ['0.2.1', '0.3', '1.0-BETA1', '1.0']];
         yield 'unstable #2' => ['0.2.4', ['0.2', '0.1'], ['0.2.1', '0.3', '1.0-BETA1', '1.0']];

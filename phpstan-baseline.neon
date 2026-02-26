@@ -1,0 +1,25 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Method Rollerworks\\Component\\Version\\ContinuesVersionsValidator\:\:getLastArrayIndex\(\) should return int but returns int\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: src/ContinuesVersionsValidator.php
+
+		-
+			message: '#^Yield can be used only with these return types\: Generator, Iterator, Traversable, iterable\.$#'
+			identifier: generator.returnType
+			count: 17
+			path: tests/ContinuesVersionsValidatorTest.php
+
+		-
+			message: '#^Method Rollerworks\\Component\\Version\\Tests\\VersionTest\:\:provideExpectedNextVersionCandidates\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/VersionTest.php
+
+		-
+			message: '#^PHPDoc tag @return has invalid value \(array\<string,array\<int, array\<int, string\>\|string\>\>\>\)\: Unexpected token "\>", expected TOKEN_HORIZONTAL_WS at offset 70 on line 2$#'
+			identifier: phpDoc.parseError
+			count: 1
+			path: tests/VersionTest.php
