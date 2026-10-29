@@ -27,7 +27,7 @@ final class Version
      * * For historic reasons stability versions may have a hyphen or dot
      *   and is considered optional
      */
-    public const VERSION_REGEX = '(?P<major>\d++)\.(?P<minor>\d++)(?:\.(?P<patch>\d++))?(?:[-.]?(?P<stability>beta|RC|alpha|stable)(?:[.-]?(?P<metaver>\d+))?)?';
+    public const VERSION_REGEX = '(?P<major>\d++)\.(?P<minor>\d++)(?:\.(?P<patch>\d++))?(?:\.(?P<buildNr>\d++))?([-.]?(?P<stability>beta|RC|alpha|stable)(?:[.-]?(?P<metaver>\d+))?)?';
 
     /** @var int */
     public $major;
@@ -37,6 +37,8 @@ final class Version
 
     /** @var int */
     public $patch;
+
+    public ?int $buildNr = null;
 
     /** @var int */
     public $stability;
@@ -59,7 +61,7 @@ final class Version
         'stable' => self::STABILITY_STABLE,
     ];
 
-    private function __construct(int $major, int $minor, int $patch, int $stability, int $metaver = 0)
+    private function __construct(int $major, int $minor, int $patch, int $stability, int $metaver = 0, ?int $buildNr = null)
     {
         if ($major === 0) {
             $stability = self::STABILITY_ALPHA;
@@ -70,22 +72,26 @@ final class Version
         $this->patch = $patch;
         $this->stability = $stability;
         $this->metaver = $metaver;
+        $this->buildNr = $buildNr;
 
         if ($stability === self::STABILITY_STABLE && $this->metaver > 0) {
             throw new \InvalidArgumentException('Meta version of the stability flag cannot be set for stable.');
         }
 
+        $buildNrStr = $this->buildNr !== null ? '.' . $this->buildNr : '';
+
         if ($major > 0 && $stability < self::STABILITY_STABLE) {
             $this->full = \sprintf(
-                '%d.%d.%d-%s%d',
+                '%d.%d.%d%s-%s%d',
                 $this->major,
                 $this->minor,
                 $this->patch,
+                $buildNrStr,
                 strtoupper(array_search($this->stability, self::$stabilityIndexes, true)), /** @phpstan-ignore-line */
                 $this->metaver
             );
         } else {
-            $this->full = \sprintf('%d.%d.%d', $this->major, $this->minor, $this->patch);
+            $this->full = \sprintf('%d.%d.%d', $this->major, $this->minor, $this->patch) . $buildNrStr;
         }
     }
 
@@ -94,22 +100,48 @@ final class Version
         return $this->full;
     }
 
+    /**
+     * Create a Version object from a string.
+     *
+     * For compatibility with Composer Semver, the build-id and -dev suffix
+     * are allowed, but the `-dev` ignored as part of the provided version.
+     *
+     * - A format might begin with `v` prefix (either `v1.0.0`).
+     * - A format might end with `-dev` suffix.
+     * - A format might ommit the patch compartment (either `1.0`).
+     */
     public static function fromString(string $version): self
     {
-        if (preg_match('/^v?' . self::VERSION_REGEX . '$/i', $version, $matches)) {
+        // This is a special case that is never accepted anywhere.
+        if (str_ends_with(strtolower($version), 'stable-dev')) {
+            throw new \InvalidArgumentException(
+                \sprintf(
+                    'Unable to parse version "%s" Expects an SemVer compatible version. ' .
+                    'Either "1.0.0", "1.0", "1.0" or "1.0.0-beta1", "1.0.0-beta-1", "1.0.0.5", "1.0.0.0-dev"',
+                    $version
+                )
+            );
+        }
+
+        if (preg_match('/^v?' . self::VERSION_REGEX . '(?:-dev)?$/i', $version, $matches)) {
+            if (! isset($matches['buildNr'])) {
+                $matches['buildNr'] = '';
+            }
+
             return new self(
                 (int) $matches['major'],
                 (int) $matches['minor'],
                 (int) ($matches['patch'] ?? 0),
                 self::$stabilityIndexes[strtolower($matches['stability'] ?? 'stable')],
-                (int) ($matches['metaver'] ?? 0)
+                (int) ($matches['metaver'] ?? 0),
+                $matches['buildNr'] !== '' ? ((int) $matches['buildNr']) : null,
             );
         }
 
         throw new \InvalidArgumentException(
             \sprintf(
-                'Unable to parse version "%s" Expects an SemVer compatible version without build-metadata. ' .
-                'Either "1.0.0", "1.0", "1.0" or "1.0.0-beta1", "1.0.0-beta-1"',
+                'Unable to parse version "%s" Expects an SemVer compatible version. ' .
+                'Either "1.0.0", "1.0", "1.0" or "1.0.0-beta1", "1.0.0-beta-1", "1.0.0.5", "1.0.0.0-dev"',
                 $version
             )
         );
@@ -124,6 +156,8 @@ final class Version
      * * 1.1.0 -> [1.2.0, 1.2.0-beta1, 2.0.0-beta1, 2.0.0]
      * * 1.0.0-beta1 -> [1.0.0-beta2, 1.0.0] (no minor or major increases)
      * * 1.0.0-alpha1 -> [1.0.0-alpha2, 1.0.0-beta1, 1.0.0] (no minor or major increases)
+     *
+     * Note: Build metadata is not considered a candidate.
      *
      * @return Version[]
      */

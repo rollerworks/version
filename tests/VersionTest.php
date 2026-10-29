@@ -31,6 +31,7 @@ class VersionTest extends TestCase
         self::assertEquals(0, $version->patch);
         self::assertEquals(1, $version->stability);
         self::assertEquals(5, $version->metaver);
+        self::assertNull($version->buildNr);
 
         self::assertEquals('1.0.0-BETA5', (string) $version);
     }
@@ -45,6 +46,7 @@ class VersionTest extends TestCase
         self::assertEquals(0, $version->patch);
         self::assertEquals(3, $version->stability);
         self::assertEquals(0, $version->metaver);
+        self::assertNull($version->buildNr);
 
         self::assertEquals('1.0.0', (string) $version);
     }
@@ -59,8 +61,24 @@ class VersionTest extends TestCase
         self::assertEquals(0, $version->patch);
         self::assertEquals(3, $version->stability);
         self::assertEquals(0, $version->metaver);
+        self::assertNull($version->buildNr);
 
         self::assertEquals('1.0.0', (string) $version);
+    }
+
+    /** @test */
+    public function it_creates_build_nr(): void
+    {
+        $version = Version::fromString('1.0.0.5');
+
+        self::assertEquals(1, $version->major);
+        self::assertEquals(0, $version->minor);
+        self::assertEquals(0, $version->patch);
+        self::assertEquals(5, $version->buildNr);
+        self::assertEquals(3, $version->stability);
+        self::assertEquals(0, $version->metaver);
+
+        self::assertEquals('1.0.0.5', (string) $version);
     }
 
     /** @return array<string,string[]> */
@@ -74,6 +92,14 @@ class VersionTest extends TestCase
             'stability without patch' => ['1.0-alpha.1', '1.0.0-ALPHA1'],
             'beta' => ['1.0.0-beta1', '1.0.0-BETA1'],
             'RC' => ['1.0.0-RC1', '1.0.0-RC1'],
+
+            'dev suffix' => ['1.0.0-RC1-dev', '1.0.0-RC1'],
+
+            // Build-nr
+            'build data' => ['1.0.0.0', '1.0.0.0'],
+            'build data 2' => ['1.0.0.0-RC1', '1.0.0.0-RC1'],
+            'build data 3' => ['1.0.0.0-RC1', '1.0.0.0-RC1'],
+            'full example' => ['1.0.0.5-RC1-dev', '1.0.0.5-RC1'],
         ];
     }
 
