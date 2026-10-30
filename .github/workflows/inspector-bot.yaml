@@ -13,4 +13,5 @@ jobs:
         with:
             package: RollerworksVersion
             check_license: true
+            php_version: '8.4'
 

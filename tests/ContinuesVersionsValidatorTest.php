@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace Rollerworks\Component\Version\Tests;
 
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Rollerworks\Component\Version\ContinuesVersionsValidator;
 use Rollerworks\Component\Version\Version;
@@ -22,7 +24,9 @@ use Rollerworks\Component\Version\Version;
  */
 class ContinuesVersionsValidatorTest extends TestCase
 {
-    /** @return iterable<int, string[]> */
+    /**
+     * @return iterable<int, string[]>
+     */
     public static function provideInitialContinuesVersions(): iterable
     {
         yield ['0.1.0'];
@@ -31,11 +35,8 @@ class ContinuesVersionsValidatorTest extends TestCase
         yield ['1.0'];
     }
 
-    /**
-     * @dataProvider provideInitialContinuesVersions
-     *
-     * @test
-     */
+    #[Test]
+    #[DataProvider('provideInitialContinuesVersions')]
     public function it_accepts_a_continues_version_with_no_pre_existing(string $new): void
     {
         $validator = new ContinuesVersionsValidator();
@@ -52,7 +53,83 @@ class ContinuesVersionsValidatorTest extends TestCase
         );
     }
 
-    /** @return iterable<string, array<int, string[]|string>> */
+    #[Test]
+    public function continues_version_with_no_pre_existing_multiple_calls(): void
+    {
+        $validator = new ContinuesVersionsValidator();
+
+        self::assertTrue($validator->isContinues(Version::fromString('0.1.0')));
+        self::assertEquals(
+            [
+                Version::fromString('0.1.0'),
+                Version::fromString('1.0.0-ALPHA1'),
+                Version::fromString('1.0.0-BETA1'),
+                Version::fromString('1.0.0'),
+            ],
+            $validator->getPossibleVersions()
+        );
+
+        self::assertTrue($validator->isContinues(Version::fromString('1.0.0-ALPHA1')));
+        self::assertEquals(
+            [
+                Version::fromString('0.1.0'),
+                Version::fromString('1.0.0-ALPHA1'),
+                Version::fromString('1.0.0-BETA1'),
+                Version::fromString('1.0.0'),
+            ],
+            $validator->getPossibleVersions()
+        );
+
+        self::assertFalse($validator->isContinues(Version::fromString('2.0.0')));
+    }
+
+    #[Test]
+    public function continues_version_with_existing_multiple_calls(): void
+    {
+        $validator = new ContinuesVersionsValidator(
+            Version::fromString('0.1.0'),
+            Version::fromString('0.2.0'),
+            Version::fromString('1.0.0'),
+            Version::fromString('2.0.0'),
+        );
+
+        self::assertTrue($validator->isContinues(Version::fromString('0.3.0')));
+        self::assertFalse($validator->isContinues(Version::fromString('0.4.0')));
+        self::assertEquals(
+            [
+                Version::fromString('0.2.1'),
+                Version::fromString('0.3.0'),
+            ],
+            $validator->getPossibleVersions()
+        );
+
+        self::assertTrue($validator->isContinues(Version::fromString('1.1.0')));
+        self::assertFalse($validator->isContinues(Version::fromString('1.0.0-ALPHA1')));
+        self::assertEquals(
+            [
+                Version::fromString('1.0.1'),
+                Version::fromString('1.1.0'),
+            ],
+            $validator->getPossibleVersions()
+        );
+
+        self::assertFalse($validator->isContinues(Version::fromString('4.0.0')));
+        self::assertEquals(
+            [
+                Version::fromString('2.0.1'),
+                Version::fromString('2.1.0-BETA1'),
+                Version::fromString('2.1.0'),
+                Version::fromString('3.0.0-ALPHA1'),
+                Version::fromString('3.0.0-BETA1'),
+                Version::fromString('3.0.0'),
+            ],
+            $validator->getPossibleVersions()
+        );
+    }
+
+    /**
+     * @return iterable<string, array<int, string[]|string>>
+     */
     public static function provideContinuesVersions(): iterable
     {
         yield 'unstable #1' => ['0.3', ['0.2', '0.1'], ['0.2.1', '0.3', '1.0-BETA1', '1.0']];
@@ -67,13 +144,11 @@ class ContinuesVersionsValidatorTest extends TestCase
     }
 
     /**
-     * @dataProvider provideContinuesVersions
-     *
      * @param array<int, string> $existing
      * @param array<int, string> $possible
-     *
-     * @test
      */
+    #[Test]
+    #[DataProvider('provideContinuesVersions')]
     public function it_accepts_a_continues_version(string $new, array $existing, array $possible): void
     {
         $validator = new ContinuesVersionsValidator(...$this->createVersions($existing));
@@ -85,19 +160,16 @@ class ContinuesVersionsValidatorTest extends TestCase
     /**
      * @param array<int, string> $existing
      *
-     * @return array<int, Version>
+     * @return Version[]
      */
     private function createVersions(array $existing): array
     {
-        return array_map(
-            static function (string $version) {
-                return Version::fromString($version);
-            },
-            $existing
-        );
+        return array_map(Version::fromString(...), $existing);
     }
 
-    /** @return iterable<int, string[]> */
+    /**
+     * @return iterable<int, string[]>
+     */
     public static function provideNotInitialContinuesVersions(): iterable
     {
         yield ['0.2.0'];
@@ -107,11 +179,8 @@ class ContinuesVersionsValidatorTest extends TestCase
         yield ['2.0'];
     }
 
-    /**
-     * @dataProvider provideNotInitialContinuesVersions
-     *
-     * @test
-     */
+    #[Test]
+    #[DataProvider('provideNotInitialContinuesVersions')]
     public function it_rejects_non_continues_version_with_no_pre_existing(string $new): void
     {
         $validator = new ContinuesVersionsValidator();
@@ -128,7 +197,9 @@ class ContinuesVersionsValidatorTest extends TestCase
         );
     }
 
-    /** @return iterable<string, array<int, string[]|string>> */
+    /**
+     * @return iterable<string, array<int, string[]|string>>
+     */
     public static function provideNonContinuesVersions(): iterable
     {
         yield 'unstable #1' => ['0.5', ['0.2', '0.1'], ['0.2.1', '0.3', '1.0-BETA1', '1.0']];
@@ -144,13 +215,11 @@ class ContinuesVersionsValidatorTest extends TestCase
     }
 
     /**
-     * @dataProvider provideNonContinuesVersions
-     *
      * @param array<int, string> $existing
      * @param array<int, string> $possible
-     *
-     * @test
      */
+    #[Test]
+    #[DataProvider('provideNonContinuesVersions')]
     public function it_rejects_non_continues_version(string $new, array $existing, array $possible): void
     {
         $validator = new ContinuesVersionsValidator(...$this->createVersions($existing));

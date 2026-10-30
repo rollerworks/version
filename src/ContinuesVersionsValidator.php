@@ -15,18 +15,22 @@ namespace Rollerworks\Component\Version;
 
 final class ContinuesVersionsValidator
 {
-    /** @var Version[] */
-    private $versions = [];
+    /** @var array<int, array<int, Version>> [major][minor] = {Version} */
+    private readonly array $versions;
 
-    /** @var Version[] */
-    private $possibleVersions = [];
-
-    /** @var array<int, Version[]> */
-    private $resolveVersions = [];
+    /** @var array<int, Version> */
+    private array $possibleVersions;
 
     public function __construct(Version ...$versions)
     {
-        $this->versions = $versions;
+        usort($versions, static fn (Version $a, Version $b) => version_compare(strtolower($a->full), strtolower($b->full), '<') ? -1 : 1);
+        $resolvedVersions = [];
+
+        foreach ($versions as $version) {
+            $resolvedVersions[$version->major][$version->minor] = $version;
+        }
+
+        $this->versions = $resolvedVersions;
     }
 
     public function isContinues(Version $new): bool
@@ -51,79 +55,59 @@ final class ContinuesVersionsValidator
         return false;
     }
 
-    /** @return Version[] */
+    /**
+     * @return Version[]
+     */
     public function getPossibleVersions(): array
     {
+        if (! isset($this->possibleVersions)) {
+            throw new \LogicException('Cannot get possible versions before computing them with isContinues().');
+        }
+
         return $this->possibleVersions;
     }
 
     private function computePossibleVersions(Version $new): void
     {
-        $this->arrangeExistingVersions();
-
         $major = $new->major;
         $minor = $new->minor;
 
-        if (! isset($this->resolveVersions[$major])) {
+        if (! isset($this->versions[$major])) {
             $this->computePossibleVersionsFromLastExisting();
 
             return;
         }
 
-        if (! isset($this->resolveVersions[$major][$minor])) {
-            $minor = $this->getLastArrayIndex($this->resolveVersions[$major]);
+        if (! isset($this->versions[$major][$minor])) {
+            $minor = array_key_last($this->versions[$major]);
         }
 
         $this->computePossibleVersionsFromMinor($major, $minor);
     }
 
-    private function arrangeExistingVersions(): void
-    {
-        usort($this->versions, static function (Version $a, Version $b) {
-            return version_compare(strtolower($a->full), strtolower($b->full), '<') ? -1 : 1;
-        });
-
-        $resolvedVersions = [];
-
-        foreach ($this->versions as $version) {
-            $resolvedVersions[$version->major][$version->minor] = $version;
-        }
-
-        $this->resolveVersions = $resolvedVersions;
-    }
-
     private function computePossibleVersionsFromLastExisting(): void
     {
-        $major = $this->getLastArrayIndex($this->resolveVersions);
-        $minor = $this->getLastArrayIndex($this->resolveVersions[$major]);
+        /** @var int $major It's impossible this non-existing */
+        $major = array_key_last($this->versions);
+        /** @var int $minor It's impossible this non-existing */
+        $minor = array_key_last($this->versions[$major]);
 
-        /** @var Version $version */
-        $version = $this->resolveVersions[$major][$minor];
-        $this->possibleVersions = $version->getNextVersionCandidates();
-    }
-
-    /** @param array<int, mixed> $array */
-    private function getLastArrayIndex(array $array): int
-    {
-        end($array);
-
-        return key($array);
+        $this->possibleVersions = $this->versions[$major][$minor]->getNextVersionCandidates();
     }
 
     private function hasNewerMajorVersionsAfter(int $major): bool
     {
-        return $this->getLastArrayIndex($this->resolveVersions) > $major;
+        return array_key_last($this->versions) > $major;
     }
 
     private function hasNewerMinorVersionsAfter(int $major, int $minor): bool
     {
-        return $this->getLastArrayIndex($this->resolveVersions[$major]) > $minor;
+        return array_key_last($this->versions[$major]) > $minor;
     }
 
     private function computePossibleVersionsFromMinor(int $major, int $minor): void
     {
-        /** @var Version $version */
-        $version = $this->resolveVersions[$major][$minor];
+        $version = $this->versions[$major][$minor];
 
         if ($this->hasNewerMinorVersionsAfter($major, $minor)) {
             $this->possibleVersions = [$version->getNextIncreaseOf('patch')];
@@ -137,7 +121,6 @@ final class ContinuesVersionsValidator
             return;
         }
 
-        $versionCandidates = $version->getNextVersionCandidates();
-        $this->possibleVersions = $versionCandidates;
+        $this->possibleVersions = $version->getNextVersionCandidates();
     }
 }

@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace Rollerworks\Component\Version\Tests;
 
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Rollerworks\Component\Version\Version;
 
@@ -21,7 +23,7 @@ use Rollerworks\Component\Version\Version;
  */
 class VersionTest extends TestCase
 {
-    /** @test */
+    #[Test]
     public function it_creates_from_full_string(): void
     {
         $version = Version::fromString('1.0.0-beta-5');
@@ -36,7 +38,7 @@ class VersionTest extends TestCase
         self::assertEquals('1.0.0-BETA5', (string) $version);
     }
 
-    /** @test */
+    #[Test]
     public function it_creates_with_explicit_stable(): void
     {
         $version = Version::fromString('1.0.0-stable');
@@ -51,7 +53,7 @@ class VersionTest extends TestCase
         self::assertEquals('1.0.0', (string) $version);
     }
 
-    /** @test */
+    #[Test]
     public function it_creates_without_patch(): void
     {
         $version = Version::fromString('1.0');
@@ -66,7 +68,7 @@ class VersionTest extends TestCase
         self::assertEquals('1.0.0', (string) $version);
     }
 
-    /** @test */
+    #[Test]
     public function it_creates_build_nr(): void
     {
         $version = Version::fromString('1.0.0.5');
@@ -81,33 +83,30 @@ class VersionTest extends TestCase
         self::assertEquals('1.0.0.5', (string) $version);
     }
 
-    /** @return array<string,string[]> */
-    public static function provideValidFormats(): array
+    /**
+     * @return iterable<string,string[]>
+     */
+    public static function provideValidFormats(): iterable
     {
-        return [
-            'with prefix in lowercase' => ['v1.0.0', '1.0.0'],
-            'with prefix in uppercase' => ['V1.0.0', '1.0.0'],
-            'stability with hyphen' => ['1.0.0-alpha-1', '1.0.0-ALPHA1'],
-            'stability with dot' => ['1.0.0-alpha.1', '1.0.0-ALPHA1'],
-            'stability without patch' => ['1.0-alpha.1', '1.0.0-ALPHA1'],
-            'beta' => ['1.0.0-beta1', '1.0.0-BETA1'],
-            'RC' => ['1.0.0-RC1', '1.0.0-RC1'],
+        yield 'with prefix in lowercase' => ['v1.0.0', '1.0.0'];
+        yield 'with prefix in uppercase' => ['V1.0.0', '1.0.0'];
+        yield 'stability with hyphen' => ['1.0.0-alpha-1', '1.0.0-ALPHA1'];
+        yield 'stability with dot' => ['1.0.0-alpha.1', '1.0.0-ALPHA1'];
+        yield 'stability without patch' => ['1.0-alpha.1', '1.0.0-ALPHA1'];
 
-            'dev suffix' => ['1.0.0-RC1-dev', '1.0.0-RC1'],
+        yield 'beta' => ['1.0.0-beta1', '1.0.0-BETA1'];
+        yield 'RC' => ['1.0.0-RC1', '1.0.0-RC1'];
+        yield 'dev suffix' => ['1.0.0-RC1-dev', '1.0.0-RC1'];
 
-            // Build-nr
-            'build data' => ['1.0.0.0', '1.0.0.0'],
-            'build data 2' => ['1.0.0.0-RC1', '1.0.0.0-RC1'],
-            'build data 3' => ['1.0.0.0-RC1', '1.0.0.0-RC1'],
-            'full example' => ['1.0.0.5-RC1-dev', '1.0.0.5-RC1'],
-        ];
+        // Build-nr
+        yield 'build data' => ['1.0.0.0', '1.0.0.0'];
+        yield 'build data 2' => ['1.0.0.0-RC1', '1.0.0.0-RC1'];
+        yield 'build data 3' => ['1.0.0.0-RC1', '1.0.0.0-RC1'];
+        yield 'full example' => ['1.0.0.5-RC1-dev', '1.0.0.5-RC1'];
     }
 
-    /**
-     * @dataProvider provideValidFormats
-     *
-     * @test
-     */
+    #[Test]
+    #[DataProvider('provideValidFormats')]
     public function it_supports_various_formats(string $version, string $expectedOutput): void
     {
         $version = Version::fromString($version);
@@ -115,7 +114,7 @@ class VersionTest extends TestCase
         self::assertEquals($expectedOutput, (string) $version);
     }
 
-    /** @test */
+    #[Test]
     public function it_compares_two_versions_are_equal(): void
     {
         $version = Version::fromString('1.0.0-beta-5');
@@ -126,129 +125,125 @@ class VersionTest extends TestCase
         self::assertFalse($version->equalTo($version3));
     }
 
-    /** @test */
+    #[Test]
     public function it_fails_for_invalid_format(): void
     {
         $this->expectException('InvalidArgumentException');
-        $this->expectExceptionMessage('Unable to parse version "1.0.0-WAT"');
+        $this->expectExceptionMessageIsOrContains('Unable to parse version "1.0.0-WAT"');
 
         Version::fromString('1.0.0-WAT');
     }
 
-    /** @test */
+    #[Test]
     public function it_fails_with_stable_plus_metaver(): void
     {
         $this->expectException('InvalidArgumentException');
-        $this->expectExceptionMessage('Meta version of the stability flag cannot be set for stable.');
+        $this->expectExceptionMessageIs('Meta version of the stability flag cannot be set for stable.');
 
         Version::fromString('1.0.0-stable-5');
     }
 
-    /** @return array<string, array<int, array<int, string>|string>>> */
-    public static function provideExpectedNextVersionCandidates(): array
+    /**
+     * @return iterable<string, array<int, array<int, string>|string>>
+     */
+    public static function provideExpectedNextVersionCandidates(): iterable
     {
-        return [
-            'alpha 0' => ['0.1.0', ['0.1.1', '0.2.0', '1.0.0-BETA1', '1.0.0']],
-            'beta' => ['1.0.0-beta-5', ['1.0.0-BETA6', '1.0.0-RC1', '1.0.0']],
-            'beta 2' => ['2.0.0-beta-5', ['2.0.0-BETA6', '2.0.0-RC1', '2.0.0']],
-            'beta 3' => ['v3.5-beta1', ['v3.5-beta2', 'v3.5-RC1', 'v3.5']],
-            'rc' => ['1.0.0-RC5', ['1.0.0-RC6', '1.0.0']],
-            'stable major' => ['1.0.0', ['1.0.1', '1.1.0-BETA1', '1.1.0', '2.0.0-ALPHA1', '2.0.0-BETA1', '2.0.0']],
-            'stable major 2' => ['2.0.0', ['2.0.1', '2.1.0-BETA1', '2.1.0', '3.0.0-ALPHA1', '3.0.0-BETA1', '3.0.0']],
-            'stable with minor' => ['1.1.0', ['1.1.1', '1.2.0-BETA1', '1.2.0', '2.0.0-ALPHA1', '2.0.0-BETA1', '2.0.0']],
-            'stable with minor and patch' => ['1.1.1', ['1.1.2', '1.2.0-BETA1', '1.2.0', '2.0.0-ALPHA1', '2.0.0-BETA1', '2.0.0']],
-            'stable with patch' => ['1.0.1', ['1.0.2', '1.1.0-BETA1', '1.1.0', '2.0.0-ALPHA1', '2.0.0-BETA1', '2.0.0']],
-        ];
+        yield 'alpha 0' => ['0.1.0', ['0.1.1', '0.2.0', '1.0.0-BETA1', '1.0.0']];
+        yield 'beta' => ['1.0.0-beta-5', ['1.0.0-BETA6', '1.0.0-RC1', '1.0.0']];
+        yield 'beta 2' => ['2.0.0-beta-5', ['2.0.0-BETA6', '2.0.0-RC1', '2.0.0']];
+        yield 'beta 3' => ['v3.5-beta1', ['v3.5-beta2', 'v3.5-RC1', 'v3.5']];
+        yield 'rc' => ['1.0.0-RC5', ['1.0.0-RC6', '1.0.0']];
+
+        yield 'stable major' => ['1.0.0', ['1.0.1', '1.1.0-BETA1', '1.1.0', '2.0.0-ALPHA1', '2.0.0-BETA1', '2.0.0']];
+        yield 'stable major 2' => ['2.0.0', ['2.0.1', '2.1.0-BETA1', '2.1.0', '3.0.0-ALPHA1', '3.0.0-BETA1', '3.0.0']];
+        yield 'stable with minor' => ['1.1.0', ['1.1.1', '1.2.0-BETA1', '1.2.0', '2.0.0-ALPHA1', '2.0.0-BETA1', '2.0.0']];
+        yield 'stable with minor and patch' => ['1.1.1', ['1.1.2', '1.2.0-BETA1', '1.2.0', '2.0.0-ALPHA1', '2.0.0-BETA1', '2.0.0']];
+        yield 'stable with patch' => ['1.0.1', ['1.0.2', '1.1.0-BETA1', '1.1.0', '2.0.0-ALPHA1', '2.0.0-BETA1', '2.0.0']];
     }
 
     /**
-     * @dataProvider provideExpectedNextVersionCandidates
-     *
-     * @param array<int, string> $expected
-     *
-     * @test
+     * @param string[] $expected
      */
+    #[Test]
+    #[DataProvider('provideExpectedNextVersionCandidates')]
     public function it_provides_next_version_candidates(string $current, array $expected): void
     {
         $candidates = Version::fromString($current)->getNextVersionCandidates();
-        $expected = array_map([Version::class, 'fromString'], $expected);
+        $expected = array_map(Version::fromString(...), $expected);
 
         self::assertEquals($expected, $candidates);
     }
 
-    /** @return array<string,string[]> */
-    public static function provideExpectedIncreasedVersion(): array
+    /**
+     * @return iterable<string,string[]>
+     */
+    public static function provideExpectedIncreasedVersion(): iterable
     {
-        return [
-            'patch with patch 0' => ['0.1.0', '0.1.1', 'patch'],
-            'patch with patch 1' => ['0.1.1', '0.1.2', 'patch'],
-            'patch with patch stable' => ['1.0.0', '1.0.1', 'patch'],
+        yield 'patch with patch 0' => ['0.1.0', '0.1.1', 'patch'];
+        yield 'patch with patch 1' => ['0.1.1', '0.1.2', 'patch'];
+        yield 'patch with patch stable' => ['1.0.0', '1.0.1', 'patch'];
 
-            // Patch with unstable. Increase metaver instead
-            'patch with patch alpha' => ['1.0.0-alpha1', '1.0.0-alpha2', 'patch'],
-            'patch with patch beta' => ['1.0.0-beta1', '1.0.0-beta2', 'patch'],
-            'patch with patch rc' => ['1.0.0-rc1', '1.0.0-rc2', 'patch'],
+        // Patch with unstable. Increase metaver instead
+        yield 'patch with patch alpha' => ['1.0.0-alpha1', '1.0.0-alpha2', 'patch'];
+        yield 'patch with patch beta' => ['1.0.0-beta1', '1.0.0-beta2', 'patch'];
+        yield 'patch with patch rc' => ['1.0.0-rc1', '1.0.0-rc2', 'patch'];
 
-            // Minor, patch must be reset
-            'minor with patch 0' => ['0.1.0', '0.2.0', 'minor'],
-            'minor with patch 1' => ['0.1.1', '0.2.0', 'minor'],
-            'minor with new minor' => ['1.1.2', '1.2.0', 'minor'],
+        // Minor, patch must be reset
+        yield 'minor with patch 0' => ['0.1.0', '0.2.0', 'minor'];
+        yield 'minor with patch 1' => ['0.1.1', '0.2.0', 'minor'];
+        yield 'minor with new minor' => ['1.1.2', '1.2.0', 'minor'];
 
-            // Major, minor and patch must be reset
-            'major.0.0' => ['0.1.0', '1.0.0', 'major'],
-            'major.1.0' => ['0.1.0', '1.0.0', 'major'],
-            'major.1.1' => ['0.1.1', '1.0.0', 'major'],
-            'major from beta' => ['1.0.0-beta1', '1.0.0', 'major'],
-            'major from 1.0' => ['1.0.0', '2.0.0', 'major'],
-            'major from 2.0-beta' => ['2.0.0-beta1', '2.0.0', 'major'],
+        // Major, minor and patch must be reset
+        yield 'major.0.0' => ['0.1.0', '1.0.0', 'major'];
+        yield 'major.1.0' => ['0.1.0', '1.0.0', 'major'];
+        yield 'major.1.1' => ['0.1.1', '1.0.0', 'major'];
+        yield 'major from beta' => ['1.0.0-beta1', '1.0.0', 'major'];
+        yield 'major from 1.0' => ['1.0.0', '2.0.0', 'major'];
+        yield 'major from 2.0-beta' => ['2.0.0-beta1', '2.0.0', 'major'];
 
-            // Next
-            'new next from 0.1.0' => ['0.1.0', '0.2.0', 'next'],
-            'new next from 0.1.1' => ['0.1.1', '0.2.0', 'next'],
-            'new next from alpha' => ['1.0.0-alpha6', '1.0.0-alpha7', 'next'],
-            'new next from alpha 2' => ['1.2.0-alpha6', '1.2.0-alpha7', 'next'],
-            'new next from beta' => ['1.0.0-beta1', '1.0.0-beta2', 'next'],
-            'new next from current stable' => ['1.0.0', '1.1.0', 'next'],
+        // Next
+        yield 'new next from 0.1.0' => ['0.1.0', '0.2.0', 'next'];
+        yield 'new next from 0.1.1' => ['0.1.1', '0.2.0', 'next'];
+        yield 'new next from alpha' => ['1.0.0-alpha6', '1.0.0-alpha7', 'next'];
+        yield 'new next from alpha 2' => ['1.2.0-alpha6', '1.2.0-alpha7', 'next'];
+        yield 'new next from beta' => ['1.0.0-beta1', '1.0.0-beta2', 'next'];
+        yield 'new next from current stable' => ['1.0.0', '1.1.0', 'next'];
 
-            // Alpha
-            'next alpha' => ['1.0.0-alpha1', '1.0.0-alpha2', 'alpha'],
-            'new alpha' => ['1.0.0', '1.1.0-alpha1', 'alpha'],
+        // Alpha
+        yield 'next alpha' => ['1.0.0-alpha1', '1.0.0-alpha2', 'alpha'];
+        yield 'new alpha' => ['1.0.0', '1.1.0-alpha1', 'alpha'];
 
-            // Beta
-            'next beta' => ['1.0.0-beta1', '1.0.0-beta2', 'beta'],
-            'new beta' => ['1.0.0', '1.1.0-beta1', 'beta'],
-            'new beta from alpha' => ['1.0.0-alpha1', '1.0.0-beta1', 'beta'],
+        // Beta
+        yield 'next beta' => ['1.0.0-beta1', '1.0.0-beta2', 'beta'];
+        yield 'new beta' => ['1.0.0', '1.1.0-beta1', 'beta'];
+        yield 'new beta from alpha' => ['1.0.0-alpha1', '1.0.0-beta1', 'beta'];
 
-            // RC
-            'next rc' => ['1.0.0-rc1', '1.0.0-rc2', 'rc'],
-            'new rc' => ['1.0.0', '1.1.0-rc1', 'rc'],
-            'new rc from alpha' => ['1.0.0-alpha1', '1.0.0-rc1', 'rc'],
-            'new rc from beta' => ['1.0.0-beta1', '1.0.0-rc1', 'rc'],
+        // RC
+        yield 'next rc' => ['1.0.0-rc1', '1.0.0-rc2', 'rc'];
+        yield 'new rc' => ['1.0.0', '1.1.0-rc1', 'rc'];
+        yield 'new rc from alpha' => ['1.0.0-alpha1', '1.0.0-rc1', 'rc'];
+        yield 'new rc from beta' => ['1.0.0-beta1', '1.0.0-rc1', 'rc'];
 
-            // Stable
-            'new stable from 0.0' => ['0.1.0', '1.0.0', 'stable'],
-            'new stable from alpha' => ['1.0.0-alpha6', '1.0.0', 'stable'],
-            'new stable from beta' => ['1.0.0-beta1', '1.0.0', 'stable'],
-            'new stable from beta 2' => ['1.2.0-beta1', '1.2.0', 'stable'],
-            'new stable from current stable' => ['1.0.0', '1.1.0', 'stable'],
-        ];
+        // Stable
+        yield 'new stable from 0.0' => ['0.1.0', '1.0.0', 'stable'];
+        yield 'new stable from alpha' => ['1.0.0-alpha6', '1.0.0', 'stable'];
+        yield 'new stable from beta' => ['1.0.0-beta1', '1.0.0', 'stable'];
+        yield 'new stable from beta 2' => ['1.2.0-beta1', '1.2.0', 'stable'];
+        yield 'new stable from current stable' => ['1.0.0', '1.1.0', 'stable'];
     }
 
-    /**
-     * @dataProvider provideExpectedIncreasedVersion
-     *
-     * @test
-     */
+    #[Test]
+    #[DataProvider('provideExpectedIncreasedVersion')]
     public function it_increases_to_next_version(string $current, string $expected, string $stability): void
     {
         self::assertEquals(Version::fromString($expected), Version::fromString($current)->getNextIncreaseOf($stability));
     }
 
-    /** @test */
+    #[Test]
     public function it_cannot_increases_for_unsupported(): void
     {
         $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Unknown stability "next-stable", accepts "alpha", "beta", "rc", "stable", "major", "next", "minor", "patch".');
+        $this->expectExceptionMessageIs('Unknown stability "next-stable", accepts "alpha", "beta", "rc", "stable", "major", "next", "minor", "patch".');
 
         Version::fromString('1.0.0-beta1')->getNextIncreaseOf('next-stable');
     }
