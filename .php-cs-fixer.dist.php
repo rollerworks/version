@@ -26,7 +26,7 @@ $config
             [
                 'header_comment' => ['header' => $header],
                 'mb_str_functions' => false,
-                'php_unit_test_annotation' => ['style' => 'annotation'], // For now
+                'php_unit_test_annotation' => ['style' => 'annotation'],
             ])
     )
     ->setFinder($finder);

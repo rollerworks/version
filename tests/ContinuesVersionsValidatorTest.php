@@ -53,6 +53,80 @@ class ContinuesVersionsValidatorTest extends TestCase
         );
     }
 
+    #[Test]
+    public function continues_version_with_no_pre_existing_multiple_calls(): void
+    {
+        $validator = new ContinuesVersionsValidator();
+
+        self::assertTrue($validator->isContinues(Version::fromString('0.1.0')));
+        self::assertEquals(
+            [
+                Version::fromString('0.1.0'),
+                Version::fromString('1.0.0-ALPHA1'),
+                Version::fromString('1.0.0-BETA1'),
+                Version::fromString('1.0.0'),
+            ],
+            $validator->getPossibleVersions()
+        );
+
+        self::assertTrue($validator->isContinues(Version::fromString('1.0.0-ALPHA1')));
+        self::assertEquals(
+            [
+                Version::fromString('0.1.0'),
+                Version::fromString('1.0.0-ALPHA1'),
+                Version::fromString('1.0.0-BETA1'),
+                Version::fromString('1.0.0'),
+            ],
+            $validator->getPossibleVersions()
+        );
+
+        self::assertFalse($validator->isContinues(Version::fromString('2.0.0')));
+    }
+
+    #[Test]
+    public function continues_version_with_existing_multiple_calls(): void
+    {
+        $validator = new ContinuesVersionsValidator(
+            Version::fromString('0.1.0'),
+            Version::fromString('0.2.0'),
+            Version::fromString('1.0.0'),
+            Version::fromString('2.0.0'),
+        );
+
+        self::assertTrue($validator->isContinues(Version::fromString('0.3.0')));
+        self::assertFalse($validator->isContinues(Version::fromString('0.4.0')));
+        self::assertEquals(
+            [
+                Version::fromString('0.2.1'),
+                Version::fromString('0.3.0'),
+            ],
+            $validator->getPossibleVersions()
+        );
+
+        self::assertTrue($validator->isContinues(Version::fromString('1.1.0')));
+        self::assertFalse($validator->isContinues(Version::fromString('1.0.0-ALPHA1')));
+        self::assertEquals(
+            [
+                Version::fromString('1.0.1'),
+                Version::fromString('1.1.0'),
+            ],
+            $validator->getPossibleVersions()
+        );
+
+        self::assertFalse($validator->isContinues(Version::fromString('4.0.0')));
+        self::assertEquals(
+            [
+                Version::fromString('2.0.1'),
+                Version::fromString('2.1.0-BETA1'),
+                Version::fromString('2.1.0'),
+                Version::fromString('3.0.0-ALPHA1'),
+                Version::fromString('3.0.0-BETA1'),
+                Version::fromString('3.0.0'),
+            ],
+            $validator->getPossibleVersions()
+        );
+    }
+
     /**
      * @return iterable<string, array<int, string[]|string>>
      */
