@@ -20,7 +20,7 @@ jobs:
         runs-on: ubuntu-24.04
 
         env:
-            php-version: '8.2'
+            php-version: '8.4'
         steps:
             -
                 name: Setup PHP

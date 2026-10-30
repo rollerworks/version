@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace Rollerworks\Component\Version\Tests;
 
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Rollerworks\Component\Version\ContinuesVersionsValidator;
 use Rollerworks\Component\Version\Version;
@@ -22,7 +24,9 @@ use Rollerworks\Component\Version\Version;
  */
 class ContinuesVersionsValidatorTest extends TestCase
 {
-    /** @return iterable<int, string[]> */
+    /**
+     * @return iterable<int, string[]>
+     */
     public static function provideInitialContinuesVersions(): iterable
     {
         yield ['0.1.0'];
@@ -31,11 +35,8 @@ class ContinuesVersionsValidatorTest extends TestCase
         yield ['1.0'];
     }
 
-    /**
-     * @dataProvider provideInitialContinuesVersions
-     *
-     * @test
-     */
+    #[Test]
+    #[DataProvider('provideInitialContinuesVersions')]
     public function it_accepts_a_continues_version_with_no_pre_existing(string $new): void
     {
         $validator = new ContinuesVersionsValidator();
@@ -52,7 +53,9 @@ class ContinuesVersionsValidatorTest extends TestCase
         );
     }
 
-    /** @return iterable<string, array<int, string[]|string>> */
+    /**
+     * @return iterable<string, array<int, string[]|string>>
+     */
     public static function provideContinuesVersions(): iterable
     {
         yield 'unstable #1' => ['0.3', ['0.2', '0.1'], ['0.2.1', '0.3', '1.0-BETA1', '1.0']];
@@ -67,13 +70,11 @@ class ContinuesVersionsValidatorTest extends TestCase
     }
 
     /**
-     * @dataProvider provideContinuesVersions
-     *
      * @param array<int, string> $existing
      * @param array<int, string> $possible
-     *
-     * @test
      */
+    #[Test]
+    #[DataProvider('provideContinuesVersions')]
     public function it_accepts_a_continues_version(string $new, array $existing, array $possible): void
     {
         $validator = new ContinuesVersionsValidator(...$this->createVersions($existing));
@@ -85,19 +86,16 @@ class ContinuesVersionsValidatorTest extends TestCase
     /**
      * @param array<int, string> $existing
      *
-     * @return array<int, Version>
+     * @return Version[]
      */
     private function createVersions(array $existing): array
     {
-        return array_map(
-            static function (string $version) {
-                return Version::fromString($version);
-            },
-            $existing
-        );
+        return array_map(Version::fromString(...), $existing);
     }
 
-    /** @return iterable<int, string[]> */
+    /**
+     * @return iterable<int, string[]>
+     */
     public static function provideNotInitialContinuesVersions(): iterable
     {
         yield ['0.2.0'];
@@ -107,11 +105,8 @@ class ContinuesVersionsValidatorTest extends TestCase
         yield ['2.0'];
     }
 
-    /**
-     * @dataProvider provideNotInitialContinuesVersions
-     *
-     * @test
-     */
+    #[Test]
+    #[DataProvider('provideNotInitialContinuesVersions')]
     public function it_rejects_non_continues_version_with_no_pre_existing(string $new): void
     {
         $validator = new ContinuesVersionsValidator();
@@ -128,7 +123,9 @@ class ContinuesVersionsValidatorTest extends TestCase
         );
     }
 
-    /** @return iterable<string, array<int, string[]|string>> */
+    /**
+     * @return iterable<string, array<int, string[]|string>>
+     */
     public static function provideNonContinuesVersions(): iterable
     {
         yield 'unstable #1' => ['0.5', ['0.2', '0.1'], ['0.2.1', '0.3', '1.0-BETA1', '1.0']];
@@ -144,13 +141,11 @@ class ContinuesVersionsValidatorTest extends TestCase
     }
 
     /**
-     * @dataProvider provideNonContinuesVersions
-     *
      * @param array<int, string> $existing
      * @param array<int, string> $possible
-     *
-     * @test
      */
+    #[Test]
+    #[DataProvider('provideNonContinuesVersions')]
     public function it_rejects_non_continues_version(string $new, array $existing, array $possible): void
     {
         $validator = new ContinuesVersionsValidator(...$this->createVersions($existing));

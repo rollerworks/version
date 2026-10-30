@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace Rollerworks\Component\Version\Tests;
 
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Rollerworks\Component\Version\Version;
 
@@ -21,7 +23,7 @@ use Rollerworks\Component\Version\Version;
  */
 class VersionTest extends TestCase
 {
-    /** @test */
+    #[Test]
     public function it_creates_from_full_string(): void
     {
         $version = Version::fromString('1.0.0-beta-5');
@@ -36,7 +38,7 @@ class VersionTest extends TestCase
         self::assertEquals('1.0.0-BETA5', (string) $version);
     }
 
-    /** @test */
+    #[Test]
     public function it_creates_with_explicit_stable(): void
     {
         $version = Version::fromString('1.0.0-stable');
@@ -51,7 +53,7 @@ class VersionTest extends TestCase
         self::assertEquals('1.0.0', (string) $version);
     }
 
-    /** @test */
+    #[Test]
     public function it_creates_without_patch(): void
     {
         $version = Version::fromString('1.0');
@@ -66,7 +68,7 @@ class VersionTest extends TestCase
         self::assertEquals('1.0.0', (string) $version);
     }
 
-    /** @test */
+    #[Test]
     public function it_creates_build_nr(): void
     {
         $version = Version::fromString('1.0.0.5');
@@ -81,8 +83,10 @@ class VersionTest extends TestCase
         self::assertEquals('1.0.0.5', (string) $version);
     }
 
-    /** @return array<string,string[]> */
-    public static function provideValidFormats(): array
+    /**
+     * @return iterable<string,string[]>
+     */
+    public static function provideValidFormats(): iterable
     {
         return [
             'with prefix in lowercase' => ['v1.0.0', '1.0.0'],
@@ -103,11 +107,8 @@ class VersionTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider provideValidFormats
-     *
-     * @test
-     */
+    #[Test]
+    #[DataProvider('provideValidFormats')]
     public function it_supports_various_formats(string $version, string $expectedOutput): void
     {
         $version = Version::fromString($version);
@@ -115,7 +116,7 @@ class VersionTest extends TestCase
         self::assertEquals($expectedOutput, (string) $version);
     }
 
-    /** @test */
+    #[Test]
     public function it_compares_two_versions_are_equal(): void
     {
         $version = Version::fromString('1.0.0-beta-5');
@@ -126,26 +127,28 @@ class VersionTest extends TestCase
         self::assertFalse($version->equalTo($version3));
     }
 
-    /** @test */
+    #[Test]
     public function it_fails_for_invalid_format(): void
     {
         $this->expectException('InvalidArgumentException');
-        $this->expectExceptionMessage('Unable to parse version "1.0.0-WAT"');
+        $this->expectExceptionMessageIsOrContains('Unable to parse version "1.0.0-WAT"');
 
         Version::fromString('1.0.0-WAT');
     }
 
-    /** @test */
+    #[Test]
     public function it_fails_with_stable_plus_metaver(): void
     {
         $this->expectException('InvalidArgumentException');
-        $this->expectExceptionMessage('Meta version of the stability flag cannot be set for stable.');
+        $this->expectExceptionMessageIs('Meta version of the stability flag cannot be set for stable.');
 
         Version::fromString('1.0.0-stable-5');
     }
 
-    /** @return array<string, array<int, array<int, string>|string>>> */
-    public static function provideExpectedNextVersionCandidates(): array
+    /**
+     * @return iterable<string, array<int, array<int, string>|string>>
+     */
+    public static function provideExpectedNextVersionCandidates(): iterable
     {
         return [
             'alpha 0' => ['0.1.0', ['0.1.1', '0.2.0', '1.0.0-BETA1', '1.0.0']],
@@ -162,22 +165,22 @@ class VersionTest extends TestCase
     }
 
     /**
-     * @dataProvider provideExpectedNextVersionCandidates
-     *
-     * @param array<int, string> $expected
-     *
-     * @test
+     * @param string[] $expected
      */
+    #[Test]
+    #[DataProvider('provideExpectedNextVersionCandidates')]
     public function it_provides_next_version_candidates(string $current, array $expected): void
     {
         $candidates = Version::fromString($current)->getNextVersionCandidates();
-        $expected = array_map([Version::class, 'fromString'], $expected);
+        $expected = array_map(Version::fromString(...), $expected);
 
         self::assertEquals($expected, $candidates);
     }
 
-    /** @return array<string,string[]> */
-    public static function provideExpectedIncreasedVersion(): array
+    /**
+     * @return iterable<string,string[]>
+     */
+    public static function provideExpectedIncreasedVersion(): iterable
     {
         return [
             'patch with patch 0' => ['0.1.0', '0.1.1', 'patch'],
@@ -234,21 +237,18 @@ class VersionTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider provideExpectedIncreasedVersion
-     *
-     * @test
-     */
+    #[Test]
+    #[DataProvider('provideExpectedIncreasedVersion')]
     public function it_increases_to_next_version(string $current, string $expected, string $stability): void
     {
         self::assertEquals(Version::fromString($expected), Version::fromString($current)->getNextIncreaseOf($stability));
     }
 
-    /** @test */
+    #[Test]
     public function it_cannot_increases_for_unsupported(): void
     {
         $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Unknown stability "next-stable", accepts "alpha", "beta", "rc", "stable", "major", "next", "minor", "patch".');
+        $this->expectExceptionMessageIs('Unknown stability "next-stable", accepts "alpha", "beta", "rc", "stable", "major", "next", "minor", "patch".');
 
         Version::fromString('1.0.0-beta1')->getNextIncreaseOf('next-stable');
     }
