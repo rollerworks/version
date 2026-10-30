@@ -1,0 +1,12 @@
+---------------------------------------------------------------------------
+
+by sstok at 2026-10-30T19:41:50Z
+
+I finally figured out why it keeps failing, the .php-cs-fixer.php `sed` command to change the vendor directory is performed _before_ changed files are copied, but since that file is modified it's copied _after_ the `sed` so it overwrites the modified file.
+
+---------------------------------------------------------------------------
+
+by sstok at 2026-10-30T20:18:16Z
+
+InspectorBot failure is unrelated., I don't know why it keeps failing.
+
