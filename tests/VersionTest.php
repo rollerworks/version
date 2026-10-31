@@ -16,7 +16,9 @@ namespace Rollerworks\Component\Version\Tests;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Rollerworks\Component\Version\Stability;
 use Rollerworks\Component\Version\Version;
+use Rollerworks\Component\Version\VersionType;
 
 /**
  * @internal
@@ -31,7 +33,7 @@ class VersionTest extends TestCase
         self::assertEquals(1, $version->major);
         self::assertEquals(0, $version->minor);
         self::assertEquals(0, $version->patch);
-        self::assertEquals(1, $version->stability);
+        self::assertEquals(Stability::Beta, $version->stability);
         self::assertEquals(5, $version->metaver);
         self::assertNull($version->buildNr);
 
@@ -46,7 +48,7 @@ class VersionTest extends TestCase
         self::assertEquals(1, $version->major);
         self::assertEquals(0, $version->minor);
         self::assertEquals(0, $version->patch);
-        self::assertEquals(3, $version->stability);
+        self::assertEquals(Stability::Stable, $version->stability);
         self::assertEquals(0, $version->metaver);
         self::assertNull($version->buildNr);
 
@@ -61,7 +63,7 @@ class VersionTest extends TestCase
         self::assertEquals(1, $version->major);
         self::assertEquals(0, $version->minor);
         self::assertEquals(0, $version->patch);
-        self::assertEquals(3, $version->stability);
+        self::assertEquals(Stability::Stable, $version->stability);
         self::assertEquals(0, $version->metaver);
         self::assertNull($version->buildNr);
 
@@ -77,7 +79,7 @@ class VersionTest extends TestCase
         self::assertEquals(0, $version->minor);
         self::assertEquals(0, $version->patch);
         self::assertEquals(5, $version->buildNr);
-        self::assertEquals(3, $version->stability);
+        self::assertEquals(Stability::Stable, $version->stability);
         self::assertEquals(0, $version->metaver);
 
         self::assertEquals('1.0.0.5', (string) $version);
@@ -236,15 +238,9 @@ class VersionTest extends TestCase
     #[DataProvider('provideExpectedIncreasedVersion')]
     public function it_increases_to_next_version(string $current, string $expected, string $stability): void
     {
-        self::assertEquals(Version::fromString($expected), Version::fromString($current)->getNextIncreaseOf($stability));
-    }
-
-    #[Test]
-    public function it_cannot_increases_for_unsupported(): void
-    {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessageIs('Unknown stability "next-stable", accepts "alpha", "beta", "rc", "stable", "major", "next", "minor", "patch".');
-
-        Version::fromString('1.0.0-beta1')->getNextIncreaseOf('next-stable');
+        self::assertEquals(
+            Version::fromString($expected),
+            Version::fromString($current)->getNextIncreaseOf(VersionType::from($stability)),
+        );
     }
 }
