@@ -1,0 +1,1 @@
+{"schema":1,"id":15,"category":"feature","title":"Replace stability string with Enum","flags":["bc-break"],"authors":["sstok"]}
