@@ -110,13 +110,13 @@ final class ContinuesVersionsValidator
         $version = $this->versions[$major][$minor];
 
         if ($this->hasNewerMinorVersionsAfter($major, $minor)) {
-            $this->possibleVersions = [$version->getNextIncreaseOf('patch')];
+            $this->possibleVersions = [$version->getNextIncreaseOf(VersionType::Patch)];
 
             return;
         }
 
         if ($this->hasNewerMajorVersionsAfter($major)) {
-            $this->possibleVersions = [$version->getNextIncreaseOf('patch'), $version->getNextIncreaseOf('minor')];
+            $this->possibleVersions = [$version->getNextIncreaseOf(VersionType::Patch), $version->getNextIncreaseOf(VersionType::Minor)];
 
             return;
         }

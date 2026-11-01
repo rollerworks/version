@@ -5,6 +5,25 @@ UPGRADE
 
 * Support for PHP < 8.1 was dropped.
 
+* The `Version` class is now explicitly read-only.
+
+* The stability now uses an enum.
+
+  ```php
+  $version = Version::fromString('v0.2.0');
+  
+  // Old
+  $version->getNextIncreaseOf('stable');
+  
+  // New
+  $version->getNextIncreaseOf(VersionType::Stable);
+  
+  // ---
+  
+  // Property contains now an instance of the `Stability` Enum.
+  $version->stability;
+  ```  
+
 ## Upgrade FROM 0.2 to 0.3
 
 * The method `increase` of `Version` is renamed to `getNextIncreaseOf`.

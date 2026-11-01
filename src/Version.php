@@ -13,86 +13,60 @@ declare(strict_types=1);
 
 namespace Rollerworks\Component\Version;
 
-final class Version
+final readonly class Version
 {
-    public const STABILITY_ALPHA = 0;
-    public const STABILITY_BETA = 1;
-    public const STABILITY_RC = 2;
-    public const STABILITY_STABLE = 3;
-
     /**
      * Match most common version formats.
      *
-     * * No prefix or build-meta (matched)
+     * * No prefix or build-meta (matched).
      * * For historic reasons stability versions may have a hyphen or dot
-     *   and is considered optional
+     *   and is considered optional.
      */
     public const VERSION_REGEX = '(?P<major>\d++)\.(?P<minor>\d++)(?:\.(?P<patch>\d++))?(?:\.(?P<buildNr>\d++))?([-.]?(?P<stability>beta|RC|alpha|stable)(?:[.-]?(?P<metaver>\d+))?)?';
 
-    /** @var int */
-    public $major;
+    /**
+     * The full version string in normalized format.
+     *
+     * Example: 1.2.3-BETA4 or 1.2.0
+     */
+    public string $full;
 
-    /** @var int */
-    public $minor;
-
-    /** @var int */
-    public $patch;
-
-    public ?int $buildNr = null;
-
-    /** @var int */
-    public $stability;
-
-    /** @var int */
-    public $metaver;
-
-    /** @var string */
-    public $full;
+    public Stability $stability;
 
     /**
-     * Higher means more stable.
-     *
-     * @var array<string,int>
+     * @param int|null $buildNr a buildNr is only provided for informational purposes
+     *                          it should not be used for comparisons
      */
-    private static $stabilityIndexes = [
-        'alpha' => self::STABILITY_ALPHA,
-        'beta' => self::STABILITY_BETA,
-        'rc' => self::STABILITY_RC,
-        'stable' => self::STABILITY_STABLE,
-    ];
-
-    private function __construct(int $major, int $minor, int $patch, int $stability, int $metaver = 0, ?int $buildNr = null)
-    {
+    private function __construct(
+        public int $major,
+        public int $minor,
+        public ?int $patch,
+        Stability $stability,
+        public int $metaver = 0,
+        public ?int $buildNr = null,
+    ) {
         if ($major === 0) {
-            $stability = self::STABILITY_ALPHA;
+            $stability = Stability::Alpha;
         }
 
-        $this->major = $major;
-        $this->minor = $minor;
-        $this->patch = $patch;
         $this->stability = $stability;
-        $this->metaver = $metaver;
-        $this->buildNr = $buildNr;
 
-        if ($stability === self::STABILITY_STABLE && $this->metaver > 0) {
+        if ($stability === Stability::Stable && $this->metaver > 0) {
             throw new \InvalidArgumentException('Meta version of the stability flag cannot be set for stable.');
         }
 
-        $buildNrStr = $this->buildNr !== null ? '.' . $this->buildNr : '';
+        $version = \sprintf('%d.%d.%d', $this->major, $this->minor, $this->patch ?? 0);
 
-        if ($major > 0 && $stability < self::STABILITY_STABLE) {
-            $this->full = \sprintf(
-                '%d.%d.%d%s-%s%d',
-                $this->major,
-                $this->minor,
-                $this->patch,
-                $buildNrStr,
-                strtoupper(array_search($this->stability, self::$stabilityIndexes, true)), /** @phpstan-ignore-line */
-                $this->metaver
-            );
-        } else {
-            $this->full = \sprintf('%d.%d.%d', $this->major, $this->minor, $this->patch) . $buildNrStr;
+        if ($this->buildNr !== null) {
+            $version .= '.' . $this->buildNr;
         }
+
+        // Add meta version
+        if ($major > 0 && $stability->isLowerThan(Stability::Stable)) {
+            $version .= \sprintf('-%s%d', strtoupper($stability->name), $this->metaver);
+        }
+
+        $this->full = $version;
     }
 
     public function __toString()
@@ -109,6 +83,12 @@ final class Version
      * - A format might begin with `v` prefix (either `v1.0.0`).
      * - A format might end with `-dev` suffix.
      * - A format might ommit the patch compartment (either `1.0`).
+     *
+     * The `$full` property contains the input as-is without any normalization
+     * (except ommited `v` prefix).
+     *
+     * Note: When the patch compartment is omitted the patch property is set to null.
+     * Use the `$normalized` property to get a full version string.
      */
     public static function fromString(string $version): self
     {
@@ -124,17 +104,16 @@ final class Version
         }
 
         if (preg_match('/^v?' . self::VERSION_REGEX . '(?:-dev)?$/i', $version, $matches)) {
-            if (! isset($matches['buildNr'])) {
-                $matches['buildNr'] = '';
-            }
+            $matches['patch'] = ($matches['patch'] ?? '') === '' ? null : (int) $matches['patch'];
+            $matches['buildNr'] = ($matches['buildNr'] ?? '') === '' ? null : (int) $matches['buildNr'];
 
             return new self(
-                (int) $matches['major'],
-                (int) $matches['minor'],
-                (int) ($matches['patch'] ?? 0),
-                self::$stabilityIndexes[strtolower($matches['stability'] ?? 'stable')],
-                (int) ($matches['metaver'] ?? 0),
-                $matches['buildNr'] !== '' ? ((int) $matches['buildNr']) : null,
+                major: (int) $matches['major'],
+                minor: (int) $matches['minor'],
+                patch: $matches['patch'],
+                stability: Stability::fromString($matches['stability'] ?? 'stable'),
+                metaver: (int) ($matches['metaver'] ?? 0),
+                buildNr: $matches['buildNr'],
             );
         }
 
@@ -169,8 +148,8 @@ final class Version
         // Use alpha as stability with metaver 1, 0.2-alpha2 is simple ignored.
         // If anyone really uses this... not our problem :)
         if ($this->major === 0) {
-            $candidates[] = $this->getNextIncreaseOf('patch');
-            $candidates[] = $this->getNextIncreaseOf('minor');
+            $candidates[] = $this->getNextIncreaseOf(VersionType::Patch);
+            $candidates[] = $this->getNextIncreaseOf(VersionType::Minor);
             $candidates[] = self::fromString('1.0.0-BETA1');
 
             // stable (RC usually follows *after* beta, but jumps to stable are accepted)
@@ -182,27 +161,30 @@ final class Version
 
         // Latest is unstable, may increase stability or metaver (nothing else)
         // 1.0.1-beta1 is not accepted, an (un)stability only applies for x.0.0
-        if ($this->stability < self::STABILITY_STABLE) {
+        if ($this->stability->isLowerThan(Stability::Stable)) {
             $candidates[] = new self($this->major, $this->minor, 0, $this->stability, $this->metaver + 1);
 
-            for ($s = $this->stability + 1; $s < 3; ++$s) {
+            $s = $this->stability->increment();
+
+            while ($s->isLowerThan(Stability::Stable)) {
                 $candidates[] = new self($this->major, $this->minor, 0, $s, 1);
+                $s = $s->increment();
             }
 
-            $candidates[] = new self($this->major, $this->minor, 0, self::STABILITY_STABLE);
+            $candidates[] = new self($this->major, $this->minor, 0, Stability::Stable);
 
             return $candidates;
         }
 
         // Stable, so a patch, major or new minor (with lower stability) version is possible, RC is excluded.
-        $candidates[] = $this->getNextIncreaseOf('patch');
-        $candidates[] = $this->getNextIncreaseOf('beta');
-        $candidates[] = $this->getNextIncreaseOf('minor');
+        $candidates[] = $this->getNextIncreaseOf(VersionType::Patch);
+        $candidates[] = $this->getNextIncreaseOf(VersionType::Beta);
+        $candidates[] = $this->getNextIncreaseOf(VersionType::Minor);
 
         // New (un)stable major (excluding RC)
-        $candidates[] = new self($this->major + 1, 0, 0, self::STABILITY_ALPHA, 1);
-        $candidates[] = new self($this->major + 1, 0, 0, self::STABILITY_BETA, 1);
-        $candidates[] = new self($this->major + 1, 0, 0, self::STABILITY_STABLE);
+        $candidates[] = new self($this->major + 1, 0, 0, Stability::Alpha, 1);
+        $candidates[] = new self($this->major + 1, 0, 0, Stability::Beta, 1);
+        $candidates[] = new self($this->major + 1, 0, 0, Stability::Stable);
 
         return $candidates;
     }
@@ -213,7 +195,7 @@ final class Version
     }
 
     /**
-     * Returns the increased Version based on the stability.
+     * Returns the increased Version based on the type.
      *
      * Note:
      *
@@ -221,90 +203,75 @@ final class Version
      * * Using 'stable' on an existing stable will increase the minor version.
      * * Using 'patch' on an unstable release increases the metaver instead.
      *
-     * @param string $stability either alpha, beta, rc, stable, major, minor or patch
-     *
      * @return self A new version instance with the changes applied
      */
-    public function getNextIncreaseOf(string $stability): self
+    public function getNextIncreaseOf(VersionType $type): self
     {
-        switch ($stability) {
-            case 'patch':
-                if ($this->major > 0 && $this->metaver > 0) {
-                    return $this->getIncreaseOfNextPossibleMinorOrMeta();
-                }
+        return match ($type) {
+            VersionType::Major => $this->getIncreaseByMajor(),
+            VersionType::Patch => $this->getIncreaseOfPatch(),
+            VersionType::Stable => $this->getIncreaseOfStable(),
+            VersionType::Minor => new self($this->major, $this->minor + 1, 0, Stability::Stable),
+            VersionType::Next => $this->getIncreaseOfNextPossibleMinorOrMeta(),
 
-                return new self($this->major, $this->minor, $this->patch + 1, self::STABILITY_STABLE);
+            // Increase the metaver
+            VersionType::Alpha,
+            VersionType::Beta,
+            VersionType::Rc => $this->getIncreaseOfMetaver(Stability::fromString($type->name)),
+        };
+    }
 
-            case 'minor':
-                return new self($this->major, $this->minor + 1, 0, self::STABILITY_STABLE);
-
-            case 'major':
-                return $this->getIncreaseByMajor();
-
-            case 'alpha':
-            case 'beta':
-            case 'rc':
-                return $this->getIncreaseOfMetaver($stability);
-
-            case 'stable':
-                return $this->getIncreaseOfStable();
-
-            case 'next':
-                return $this->getIncreaseOfNextPossibleMinorOrMeta();
-
-            default:
-                throw new \InvalidArgumentException(
-                    \sprintf(
-                        'Unknown stability "%s", accepts "%s".',
-                        $stability,
-                        implode('", "', ['alpha', 'beta', 'rc', 'stable', 'major', 'next', 'minor', 'patch'])
-                    )
-                );
+    private function getIncreaseOfPatch(): self
+    {
+        if ($this->major > 0 && $this->metaver > 0) {
+            return $this->getIncreaseOfNextPossibleMinorOrMeta();
         }
+
+        return new self($this->major, $this->minor, $this->patch + 1, Stability::Stable);
     }
 
     private function getIncreaseOfNextPossibleMinorOrMeta(): self
     {
-        if ($this->major > 0 && $this->stability < self::STABILITY_STABLE) {
+        if ($this->major > 0 && $this->stability->isLowerThan(Stability::Stable)) {
             return new self($this->major, $this->minor, $this->patch, $this->stability, $this->metaver + 1);
         }
 
-        return new self($this->major, $this->minor + 1, 0, self::STABILITY_STABLE);
+        return new self($this->major, $this->minor + 1, 0, Stability::Stable);
     }
 
     private function getIncreaseByMajor(): self
     {
-        if ($this->stability < self::STABILITY_STABLE) {
-            return new self(max($this->major, 1), 0, 0, self::STABILITY_STABLE);
+        if ($this->stability->isLowerThan(Stability::Stable)) {
+            return new self(max($this->major, 1), 0, 0, Stability::Stable);
         }
 
-        return new self($this->major + 1, 0, 0, self::STABILITY_STABLE);
+        return new self($this->major + 1, 0, 0, Stability::Stable);
     }
 
-    private function getIncreaseOfMetaver(string $stability): self
+    private function getIncreaseOfMetaver(Stability $stability): self
     {
-        if ($this->stability === self::$stabilityIndexes[$stability]) {
+        if ($this->stability === $stability) {
             return new self($this->major, $this->minor, 0, $this->stability, $this->metaver + 1);
         }
 
-        if (self::$stabilityIndexes[$stability] > $this->stability) {
-            return new self($this->major, $this->minor, 0, self::$stabilityIndexes[$stability], 1);
+        if ($stability->isHigherThan($this->stability)) {
+            return new self($this->major, $this->minor, 0, $stability, 1);
         }
 
         // Lower stability than current.
-        return new self($this->major, $this->minor + 1, 0, self::$stabilityIndexes[$stability], 1);
+        return new self($this->major, $this->minor + 1, 0, $stability, 1);
     }
 
     private function getIncreaseOfStable(): self
     {
-        if ($this->stability === self::STABILITY_STABLE) {
-            return new self($this->major, $this->minor + 1, 0, self::STABILITY_STABLE);
+        if ($this->stability === Stability::Stable) {
+            return new self($this->major, $this->minor + 1, 0, Stability::Stable);
         }
 
         if ($this->major === 0) {
-            return new self(1, 0, 0, self::STABILITY_STABLE);
+            return new self(1, 0, 0, Stability::Stable);
         }
 
-        return new self($this->major, $this->minor, 0, self::STABILITY_STABLE);
+        return new self($this->major, $this->minor, 0, Stability::Stable);
     }
 }
