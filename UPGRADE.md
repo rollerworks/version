@@ -3,7 +3,7 @@ UPGRADE
 
 ## Upgrade FROM 0.3 to 0.4
 
-* Support for PHP < 8.1 was dropped.
+* Support for PHP < 8.3 was dropped.
 
 * The `Version` class is now explicitly read-only.
 
@@ -23,6 +23,49 @@ UPGRADE
   // Property contains now an instance of the `Stability` Enum.
   $version->stability;
   ```  
+  
+* The `Version::__toString` method now returns a formatted string instead. 
+  Formatted in accordance with the `$outputFormat` format.
+
+  Use `$version->full` to get the normalized version string.
+  Or use `$version->format()` to get the version in a specific format.
+
+  The `format()` method still expects a version is formatted in compliance 
+  with the SemVer formatting of `{major}.{minor}.{patch}` (where patch might be omitted).
+
+  Either:
+
+   ```php
+   // {major} and {minor} are required, other identifiers might be omitted
+   // identifiers starting with a `?` are only filled-in when they have a value
+   // *and* in the case of a provided {build} the {patch} is always filled.
+   //
+   // The v (or V) prefix is allowed, but nothing else.
+   // metaver is formatted as: -{metaver:casing}[separator '-', '.' or omitted][number]
+   // Either: `-{metaver:title}.x` formats as `-Alpha.5`
+   //
+   // Shown with full format (same as `full` property)
+   // See methods PHPDoc for all available format options.
+   $version->format('{major}.{minor}.{patch}.{build}-{metaver:title}.x');
+   ```
+  
+* The `Version::getNextVersionCandidates()` method now only considers a patch version
+  when the provided version has a patch version.
+
+* The `Version::getNextVersionCandidates()` method now also considers a build version
+  when the provided version has a build version.
+
+> [!TIP]
+> The `Version::fromString()` now accepts (bitwise) options to either fill-in 
+> any missing patch or build identifier. With `Version::INPUT_FILL_PATCH`
+> and/or `Version::INPUT_FILL_BUILD` respectively.
+>
+> Or alternatively remove the patch or build identifier with `Version::INPUT_INORE_PATCH`
+> and/or `Version::INPUT_IGNORE_BUILD` respectively.
+>
+> In both cases (filling or ignoring) the patch will be properly handled to conform
+> to the semantic versioning specification. 
+> _The patch identifier cannot be omitted when build is set._
 
 ## Upgrade FROM 0.2 to 0.3
 
