@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace Rollerworks\Component\Version;
 
-enum VersionType: string
+enum VersionIdentifier: string
 {
     case Major = 'major';
 
@@ -31,6 +31,8 @@ enum VersionType: string
 
     case Next = 'next';
 
+    case Build = 'build';
+
     public static function fromString(string $type): self
     {
         return match (strtolower($type)) {
@@ -43,8 +45,9 @@ enum VersionType: string
             'rc' => self::Rc,
             'stable' => self::Stable,
             'next' => self::Next,
+            'build' => self::Build,
 
-            default => throw new \InvalidArgumentException(\sprintf('Invalid version type "%s" given, only accepts: "%s".', $type, implode('", "', array_map(static fn (self $type): string => $type->name, self::cases())))),
+            default => throw new \InvalidArgumentException(\sprintf('Invalid version identifier "%s" given, only accepts: "%s".', $type, implode('", "', array_map(static fn (self $type): string => $type->name, self::cases())))),
         };
     }
 }
