@@ -7,6 +7,9 @@ UPGRADE
 
 * The `Version` class is now explicitly read-only.
 
+* Metaver is renamed to pre-release (`preRelease` for properties)
+  to better align with the official Semver terminology.
+
 * The stability now uses an enum.
 
   ```php
@@ -41,12 +44,12 @@ UPGRADE
    // *and* in the case of a provided {build} the {patch} is always filled.
    //
    // The v (or V) prefix is allowed, but nothing else.
-   // metaver is formatted as: -{metaver:casing}[separator '-', '.' or omitted][number]
-   // Either: `-{metaver:title}.x` formats as `-Alpha.5`
+   // pre-release is formatted as: -{pre-release:casing}[separator '-', '.' or omitted][number]
+   // Either: `-{pre-release:title}.x` formats as `-Alpha.5`
    //
    // Shown with full format (same as `full` property)
    // See methods PHPDoc for all available format options.
-   $version->format('{major}.{minor}.{patch}.{build}-{metaver:title}.x');
+   $version->format('{major}.{minor}.{patch}.{build}-{pre-release:title}.x');
    ```
   
 * The `Version::getNextVersionCandidates()` method now only considers a patch version

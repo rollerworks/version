@@ -50,7 +50,7 @@ $newVersion = $version->increase('beta');  // v1.4.0-BETA1
 $newVersion = $version->increase('rc');    // v1.4.0-RC1
 
 // ...
-// Increasing minor or patch is prohibited until the meta-ver (alpha,beta,rc) is 0
+// Increasing minor or patch is prohibited until the pre-release (alpha,beta,rc) is 0
 // For patch this resolves to "next".
 
 $version = Version::fromString('v1.4.0-BETA1');
