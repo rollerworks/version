@@ -60,12 +60,12 @@ final class Version
     private readonly ?int $buildEmpty;
 
     private function __construct(
-        public int $major,
-        public int $minor,
-        public ?int $patch,
+        public readonly int $major,
+        public readonly int $minor,
+        public readonly ?int $patch,
         Stability $stability = Stability::Stable,
         int $metaver = 0,
-        public ?int $build = null,
+        public readonly ?int $build = null,
         ?string $outputFormat = null,
     ) {
         self::$formatter ??= new VersionFormatter();
