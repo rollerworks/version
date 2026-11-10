@@ -78,19 +78,6 @@ final class VersionFormatter
         return $versionString;
     }
 
-    private function formatVersionIdentifier(IdentifierMarker $marker, ?int $ver): string
-    {
-        if ($marker === IdentifierMarker::Always) {
-            return '.' . ($ver ?? 0);
-        }
-
-        if ($marker === IdentifierMarker::WhenProvided && $ver !== null) {
-            return '.' . $ver;
-        }
-
-        return '';
-    }
-
     /**
      * Modifies the format of the version string by applying the provided options.
      *
@@ -192,6 +179,19 @@ final class VersionFormatter
         if ($length > $this->position) {
             throw new \InvalidArgumentException(\sprintf('Invalid format "%s" provided at position "%s". Expected nothing more at this position. Note that any custom suffix like is not accepted.', $format, substr($format, $this->position)));
         }
+    }
+
+    private function formatVersionIdentifier(IdentifierMarker $marker, ?int $ver): string
+    {
+        if ($marker === IdentifierMarker::Always) {
+            return '.' . ($ver ?? 0);
+        }
+
+        if ($marker === IdentifierMarker::WhenProvided && $ver !== null) {
+            return '.' . $ver;
+        }
+
+        return '';
     }
 
     private function matchInFormat(string $input, string $expected): IdentifierMarker

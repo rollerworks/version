@@ -211,19 +211,19 @@ final class Version
      * - Must not contain any whitespace characters;
      * - May optionally start with a leading `v` character (lower or uppercase);
      * - Must precede with `{major}.{minor}`;
-     * - May procede with a `{patch}` identifier (use `{?patch}` to only use when a patch was provided);
-     * - May procede with a `{build}` identifier (use `{?build}` to only use when a build was provided);
-     * - May procede with `-{metaver}x` (`dash` and `x` are mandatory) x maybe seperated by a dot (`.`) character
-     *   or dash (`-`) character or no character (as shown);
+     * - May proceed with a `{patch}` identifier (use `{?patch}` to only use when a patch was provided);
+     * - May proceed with a `{build}` identifier (use `{?build}` to only use when a build was provided);
+     * - May proceed with `-{metaver}x` (prefix `dash` and `x` are mandatory) x maybe separated
+     *   by a dot (`.`) character or dash (`-`) character, or no character (as shown);
      *
      *   To change the casing of the meta-version, use `{metaver:<case>}`,
      *   `<case>` can be `lower`, `upper` or `title`, like `{metaver:upper}`.
      *
      * No other suffix is allowed after the meta-version identifier.
      * Note: Identifiers (except for meta-version) must be separated by a dot (`.`) character
-     * and cannot be reorded. Cannot be used `{build}` before (or instead of) a `{patch}`.
+     * and cannot be reordered. Cannot be used `{build}` before (or instead of) a `{patch}`.
      *
-     * A Meta-version is always only displayed when provided.
+     * A Meta-version is only displayed when provided.
      *
      * Full examples:
      *
