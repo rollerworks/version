@@ -109,10 +109,10 @@ class ContinuesVersionsValidatorTest extends TestCase
     #[Test]
     public function it_formats_initial_candidates_with_the_correct_format(): void
     {
-        $expectedFormat = '{major}.{minor}.{?patch}.{?build}-{metaver:title}.x';
+        $expectedFormat = '{major}.{minor}.{?patch}.{?build}-{pre-release:title}.x';
         $validator = new ContinuesVersionsValidator();
 
-        self::assertTrue($validator->isContinues(Version::fromString('1.0', '{major}.{minor}-{metaver:title}.x')));
+        self::assertTrue($validator->isContinues(Version::fromString('1.0', '{major}.{minor}-{pre-release:title}.x')));
         self::assertVersionsEquals(
             [
                 '0.1' => Version::fromString('0.1', $expectedFormat),

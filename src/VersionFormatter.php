@@ -20,21 +20,21 @@ final class VersionFormatter
      *
      * Either: "1.0-ALPHA1", "1.0.0", "1.0.0.0", "1.0.0.5-ALPHA1"
      */
-    public const string FORMAT_DEFAULT = '{major}.{minor}.{?patch}.{?build}-{metaver:upper}x';
+    public const string FORMAT_DEFAULT = '{major}.{minor}.{?patch}.{?build}-{pre-release:upper}x';
 
     /**
      * Full Output-format (with `{patch}`, `{build}`, uppercase pre-release without seperator).
      *
      * Either: "1.0.0-ALPHA1", "1.0.0.0", or "1.0.0-ALPHA1", "1.0.0.5" (when build number is set)
      */
-    public const string FORMAT_FULL = '{major}.{minor}.{patch}.{build}-{metaver:upper}x';
+    public const string FORMAT_FULL = '{major}.{minor}.{patch}.{build}-{pre-release:upper}x';
 
     /**
      * Full Output-format (with `{patch}`, without `{build}`, uppercase pre-release without no seperator).
      *
      * Either: "1.0.0-ALPHA1", "1.0.0"
      */
-    public const string FORMAT_WITHOUT_BUILD = '{major}.{minor}.{patch}-{metaver:upper}x';
+    public const string FORMAT_WITHOUT_BUILD = '{major}.{minor}.{patch}-{pre-release:upper}x';
 
     private int $position = 0;
     private string $prefix;
@@ -42,7 +42,7 @@ final class VersionFormatter
     private IdentifierMarker $buildPattern;
 
     /** @var array{casing: string, separator: string}|null */
-    private ?array $metaverPattern = null;
+    private ?array $preReleasePattern = null;
 
     /**
      * @throws \InvalidArgumentException when the format is invalid
@@ -50,7 +50,7 @@ final class VersionFormatter
     public function format(Version $version, string $format = self::FORMAT_DEFAULT): string
     {
         $this->prefix = '';
-        $this->metaverPattern = ['casing' => 'upper', 'separator' => ''];
+        $this->preReleasePattern = ['casing' => 'upper', 'separator' => ''];
 
         if ($format === self::FORMAT_FULL) {
             $this->patchPattern = IdentifierMarker::Always;
@@ -71,8 +71,8 @@ final class VersionFormatter
         $versionString .= $this->formatVersionIdentifier($this->patchPattern, $version->patch);
         $versionString .= $this->formatVersionIdentifier($this->buildPattern, $version->build);
 
-        if ($this->metaverPattern !== null && $version->major > 0 && $version->stability->isLowerThan(Stability::Stable)) {
-            $versionString .= \sprintf('-%s%s%d', $version->stability->label($this->metaverPattern['casing']), $this->metaverPattern['separator'], $version->metaver);
+        if ($this->preReleasePattern !== null && $version->major > 0 && $version->stability->isLowerThan(Stability::Stable)) {
+            $versionString .= \sprintf('-%s%s%d', $version->stability->label($this->preReleasePattern['casing']), $this->preReleasePattern['separator'], $version->preRelease);
         }
 
         return $versionString;
@@ -87,12 +87,12 @@ final class VersionFormatter
      * is provided, the `{patch}` identifier must be included.
      *
      * @param 'v'|'V'|null                 $prefix
-     * @param 'upper'|'lower'|'title'|null $metaverCashing
-     * @param '-'|''|null                  $metaverSeparator
+     * @param 'upper'|'lower'|'title'|null $preReleaseCasing
+     * @param '-'|''|null                  $preReleaseSeparator
      *
-     * @throws \InvalidArgumentException when the format is invalid or when the metaver options are invalid
+     * @throws \InvalidArgumentException when the format is invalid or when the pre-release options are invalid
      */
-    public function modifyFormat(string $original, ?string $prefix = null, ?IdentifierMarker $patch = null, ?IdentifierMarker $build = null, ?bool $metaVer = null, ?string $metaverCashing = null, ?string $metaverSeparator = null): string
+    public function modifyFormat(string $original, ?string $prefix = null, ?IdentifierMarker $patch = null, ?IdentifierMarker $build = null, ?bool $preRelease = null, ?string $preReleaseCasing = null, ?string $preReleaseSeparator = null): string
     {
         $this->parse($original);
 
@@ -100,12 +100,12 @@ final class VersionFormatter
             throw new \InvalidArgumentException(\sprintf('Invalid prefix "%s" provided. Expects "v" or "V".', $prefix));
         }
 
-        if (! \in_array($metaverCashing, ['upper', 'lower', 'title', null], true)) {
-            throw new \InvalidArgumentException(\sprintf('Invalid metaver casing "%s" provided. Expects "upper", "lower", "title", or null.', $metaverCashing));
+        if (! \in_array($preReleaseCasing, ['upper', 'lower', 'title', null], true)) {
+            throw new \InvalidArgumentException(\sprintf('Invalid pre-release casing "%s" provided. Expects "upper", "lower", "title", or null.', $preReleaseCasing));
         }
 
-        if (! \in_array($metaverSeparator, ['-', '_', '', null], true)) {
-            throw new \InvalidArgumentException(\sprintf('Invalid metaver separator "%s" provided. Expects "-", "_", "" (empty string), or null.', $metaverSeparator));
+        if (! \in_array($preReleaseSeparator, ['-', '_', '', null], true)) {
+            throw new \InvalidArgumentException(\sprintf('Invalid pre-release separator "%s" provided. Expects "-", "_", "" (empty string), or null.', $preReleaseSeparator));
         }
 
         $this->prefix = $prefix ?? $this->prefix;
@@ -116,17 +116,17 @@ final class VersionFormatter
             throw new \InvalidArgumentException('Build cannot be used when "patch" identifier is omited.');
         }
 
-        if ($metaVer === false && ($metaverCashing || $metaverSeparator)) {
-            throw new \InvalidArgumentException('Metaver options "$metaverCashing" and/or "$metaverSeparator" cannot be provided when metaver is disabled, pass null to these arguments or remove them from the invocation.');
+        if ($preRelease === false && ($preReleaseCasing || $preReleaseSeparator)) {
+            throw new \InvalidArgumentException('Pre-release options "$preReleaseCasing" and/or "$preReleaseSeparator" cannot be provided when pre-release is disabled, pass null to these arguments or remove them from the invocation.');
         }
 
         $format = $this->prefix . '{major}.{minor}' . $this->patchPattern->toFormat('patch') . $this->buildPattern->toFormat('build');
 
-        if ($metaVer ?? ($this->metaverPattern !== null)) {
+        if ($preRelease ?? ($this->preReleasePattern !== null)) {
             $format .= \sprintf(
-                '-{metaver:%s}%sx',
-                $metaverCashing ?? $this->metaverPattern['casing'] ?? 'upper',
-                $metaverSeparator ?? $this->metaverPattern['separator'] ?? ''
+                '-{pre-release:%s}%sx',
+                $preReleaseCasing ?? $this->preReleasePattern['casing'] ?? 'upper',
+                $preReleaseSeparator ?? $this->preReleasePattern['separator'] ?? ''
             );
         }
 
@@ -148,7 +148,7 @@ final class VersionFormatter
         $this->prefix = $matches['prefix'] ?? '';
         $this->position = \strlen($matches[0]);
 
-        $this->metaverPattern = null;
+        $this->preReleasePattern = null;
         $this->patchPattern = $this->matchInFormat($format, 'patch');
         $this->buildPattern = $this->matchInFormat($format, 'build');
 
@@ -156,20 +156,20 @@ final class VersionFormatter
             throw new \InvalidArgumentException(\sprintf('Invalid format "%s" provided. The "{build}" identifier cannot be used unless the "{patch}" identifier is also provided (before the "{build}" identifier) .', $format));
         }
 
-        // No meta-version
+        // No pre-release
         if ($this->position >= $length) {
             return;
         }
 
-        if (! preg_match('/^-\\{metaver(?::(?P<casing>[^}]+))?}(?P<separator>[-.]?)x/', substr($format, $this->position), $matches)) {
-            throw new \InvalidArgumentException(\sprintf('Invalid format "%s" provided at position "%s". Expected something like ("-{metaver}-x", "-{metaver}.x", or "-{metaver}x". As no other seperators are accepted) at this position. Note that the dash (-) prefix is mandatory, and the "x" cannot be omitted.', $format, substr($format, $this->position)));
+        if (! preg_match('/^-\\{pre-release(?::(?P<casing>[^}]+))?}(?P<separator>[-.]?)x/', substr($format, $this->position), $matches)) {
+            throw new \InvalidArgumentException(\sprintf('Invalid format "%s" provided at position "%s". Expected something like ("-{pre-release}-x", "-{pre-release}.x", or "-{pre-release}x". As no other seperators are accepted) at this position. Note that the dash (-) prefix is mandatory, and the "x" cannot be omitted.', $format, substr($format, $this->position)));
         }
 
         if ($matches['casing'] !== '' && ! \in_array($matches['casing'], ['upper', 'lower', 'title'], true)) {
-            throw new \InvalidArgumentException(\sprintf('Invalid format "%s" provided at position "%s". Unknown casing "%s" for "{metaver}" identifier. Expected either "upper", "lower" or "title".', $format, substr($format, $this->position), $matches['casing']));
+            throw new \InvalidArgumentException(\sprintf('Invalid format "%s" provided at position "%s". Unknown casing "%s" for "{pre-release}" identifier. Expected either "upper", "lower" or "title".', $format, substr($format, $this->position), $matches['casing']));
         }
 
-        $this->metaverPattern = [
+        $this->preReleasePattern = [
             'casing' => $matches['casing'] ?: 'upper',
             'separator' => $matches['separator'],
         ];

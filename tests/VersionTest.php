@@ -40,7 +40,7 @@ class VersionTest extends TestCase
         self::assertEquals(0, $version->patch);
         self::assertNull($version->build);
         self::assertEquals(Stability::Beta, $version->stability);
-        self::assertEquals(5, $version->metaver);
+        self::assertEquals(5, $version->preRelease);
         self::assertEquals('1.0.0.0-BETA5', $version->full);
         self::assertEquals('1.0.0-BETA5', $version->fullWithoutBuild);
 
@@ -56,7 +56,7 @@ class VersionTest extends TestCase
                 'pre_release' => 5,
             ],
             'output_format' => $version->outputFormat,
-            'format_of_increment' => '{major}.{minor}.{?patch}.{?build}-{metaver:upper}x',
+            'format_of_increment' => '{major}.{minor}.{?patch}.{?build}-{pre-release:upper}x',
         ], $version->__debugInfo());
     }
 
@@ -70,7 +70,7 @@ class VersionTest extends TestCase
         self::assertEquals(0, $version->patch);
         self::assertNull($version->build);
         self::assertEquals(Stability::Stable, $version->stability);
-        self::assertEquals(0, $version->metaver);
+        self::assertEquals(0, $version->preRelease);
         self::assertEquals('1.0.0.0', $version->full);
         self::assertEquals('1.0.0', $version->fullWithoutBuild);
     }
@@ -85,7 +85,7 @@ class VersionTest extends TestCase
         self::assertEquals(0, $version->patch);
         self::assertNull($version->build);
         self::assertEquals(Stability::Stable, $version->stability);
-        self::assertEquals(0, $version->metaver);
+        self::assertEquals(0, $version->preRelease);
         self::assertEquals('1.0.0.0', $version->full);
         self::assertEquals('1.0.0', $version->fullWithoutBuild);
     }
@@ -100,7 +100,7 @@ class VersionTest extends TestCase
         self::assertEquals(0, $version->patch);
         self::assertEquals(5, $version->build);
         self::assertEquals(Stability::Stable, $version->stability);
-        self::assertEquals(0, $version->metaver);
+        self::assertEquals(0, $version->preRelease);
         self::assertEquals('1.0.0.5', $version->full);
         self::assertEquals('1.0.0', $version->fullWithoutBuild);
 
@@ -116,7 +116,7 @@ class VersionTest extends TestCase
                 'pre_release' => 0,
             ],
             'output_format' => $version->outputFormat,
-            'format_of_increment' => '{major}.{minor}.{?patch}.{?build}-{metaver:upper}x',
+            'format_of_increment' => '{major}.{minor}.{?patch}.{?build}-{pre-release:upper}x',
         ], $version->__debugInfo());
     }
 
@@ -130,7 +130,7 @@ class VersionTest extends TestCase
         self::assertNull($version->patch);
         self::assertNull($version->build);
         self::assertEquals(Stability::Stable, $version->stability);
-        self::assertEquals(0, $version->metaver);
+        self::assertEquals(0, $version->preRelease);
         self::assertEquals('1.0.0.0', $version->full);
         self::assertEquals('1.0.0', $version->fullWithoutBuild);
 
@@ -146,7 +146,7 @@ class VersionTest extends TestCase
                 'pre_release' => 0,
             ],
             'output_format' => $version->outputFormat,
-            'format_of_increment' => '{major}.{minor}.{?patch}.{?build}-{metaver:upper}x',
+            'format_of_increment' => '{major}.{minor}.{?patch}.{?build}-{pre-release:upper}x',
         ], $version->__debugInfo());
     }
 
@@ -159,7 +159,7 @@ class VersionTest extends TestCase
         self::assertEquals(1, $version->patch);
         self::assertNull($version->build);
         self::assertEquals(Stability::Stable, $version->stability);
-        self::assertEquals(0, $version->metaver);
+        self::assertEquals(0, $version->preRelease);
         self::assertEquals('1.0.1.0', $version->full);
         self::assertEquals('1.0.1', $version->fullWithoutBuild);
 
@@ -175,7 +175,7 @@ class VersionTest extends TestCase
                 'pre_release' => 0,
             ],
             'output_format' => $version->outputFormat,
-            'format_of_increment' => '{major}.{minor}.{?patch}.{?build}-{metaver:upper}x',
+            'format_of_increment' => '{major}.{minor}.{?patch}.{?build}-{pre-release:upper}x',
         ], $version->__debugInfo());
     }
 
@@ -189,7 +189,7 @@ class VersionTest extends TestCase
         self::assertEquals(5, $version->patch);
         self::assertEquals(3, $version->build);
         self::assertEquals(Stability::Stable, $version->stability);
-        self::assertEquals(0, $version->metaver);
+        self::assertEquals(0, $version->preRelease);
         self::assertEquals('1.0.5.3', $version->full);
         self::assertEquals('1.0.5', $version->fullWithoutBuild);
     }
@@ -204,7 +204,7 @@ class VersionTest extends TestCase
         self::assertEquals(0, $version->patch);
         self::assertNull($version->build);
         self::assertEquals(Stability::Stable, $version->stability);
-        self::assertEquals(0, $version->metaver);
+        self::assertEquals(0, $version->preRelease);
         self::assertEquals('1.0.0.0', $version->full);
         self::assertEquals('1.0.0', $version->fullWithoutBuild);
 
@@ -214,7 +214,7 @@ class VersionTest extends TestCase
         self::assertEquals(5, $version->patch);
         self::assertNull($version->build);
         self::assertEquals(Stability::Stable, $version->stability);
-        self::assertEquals(0, $version->metaver);
+        self::assertEquals(0, $version->preRelease);
         self::assertEquals('1.0.5.0', $version->full);
         self::assertEquals('1.0.5', $version->fullWithoutBuild);
     }
@@ -228,7 +228,7 @@ class VersionTest extends TestCase
         self::assertEquals(0, $version->patch);
         self::assertEquals(0, $version->build);
         self::assertEquals(Stability::Stable, $version->stability);
-        self::assertEquals(0, $version->metaver);
+        self::assertEquals(0, $version->preRelease);
         self::assertEquals('1.0.0.0', $version->full);
         self::assertEquals('1.0.0', $version->fullWithoutBuild);
 
@@ -238,7 +238,7 @@ class VersionTest extends TestCase
         self::assertEquals(5, $version->patch);
         self::assertEquals(0, $version->build);
         self::assertEquals(Stability::Stable, $version->stability);
-        self::assertEquals(0, $version->metaver);
+        self::assertEquals(0, $version->preRelease);
         self::assertEquals('1.0.5.0', $version->full);
         self::assertEquals('1.0.5', $version->fullWithoutBuild);
 
@@ -248,7 +248,7 @@ class VersionTest extends TestCase
         self::assertEquals(5, $version->patch);
         self::assertEquals(8, $version->build);
         self::assertEquals(Stability::Stable, $version->stability);
-        self::assertEquals(0, $version->metaver);
+        self::assertEquals(0, $version->preRelease);
         self::assertEquals('1.0.5.8', $version->full);
         self::assertEquals('1.0.5', $version->fullWithoutBuild);
     }
@@ -317,7 +317,7 @@ class VersionTest extends TestCase
         self::assertTrue(Version::fromString('1.0.0')->equalTo(Version::fromString('1.0.0')));
         self::assertTrue(Version::fromString('1.0.0')->equalTo(Version::fromString('1.0.0-stable')));
 
-        // Metaversion
+        // Pre-release
         self::assertTrue(Version::fromString('1.0.0-Alpha-1')->equalTo(Version::fromString('1.0.0-ALPHA1')));
         self::assertTrue(Version::fromString('1.0.0-beta-5')->equalTo(Version::fromString('1.0.0-beta5')));
         self::assertTrue(Version::fromString('1.0.0-beta6')->equalTo(Version::fromString('1.0.0-beta6')));
@@ -393,26 +393,26 @@ class VersionTest extends TestCase
         $alphaVersion = Version::fromString('1.0.0.0-BETA1');
 
         $versionWithoutBuild = Version::fromString('1.0.0-BETA1');
-        $versionWithCustomFormat = Version::fromString('1.0-BETA1', outputFormat: '{major}.{minor}.{patch}.{build}-{metaver:title}.x');
+        $versionWithCustomFormat = Version::fromString('1.0-BETA1', outputFormat: '{major}.{minor}.{patch}.{build}-{pre-release:title}.x');
         $versionWithoutPatch = Version::fromString('1.0');
 
         yield 'Default format' => [$stableVersion, null, '1.1.0'];
         yield 'Default format (with without patch)' => [$versionWithoutPatch, null, '1.0'];
         yield 'Default format (with build)' => [$stableVersionWithBuild, null, '1.1.0.1'];
-        yield 'Default format (with meta)' => [$alphaVersion, null, '1.0.0.0-BETA1'];
+        yield 'Default format (with pre-release)' => [$alphaVersion, null, '1.0.0.0-BETA1'];
         yield 'Default custom format' => [$versionWithCustomFormat, null, '1.0.0.0-Beta.1'];
 
-        yield 'Custom format' => [$alphaVersion, '{major}.{minor}.{patch}.{build}-{metaver:lower}-x', '1.0.0.0-beta-1'];
-        yield 'Custom format (v prefix)' => [$alphaVersion, 'v{major}.{minor}.{patch}.{build}-{metaver:lower}-x', 'v1.0.0.0-beta-1'];
-        yield 'Custom format (V prefix)' => [$alphaVersion, 'V{major}.{minor}.{patch}.{build}-{metaver:lower}-x', 'V1.0.0.0-beta-1'];
-        yield 'Custom format (without casing)' => [$alphaVersion, '{major}.{minor}-{metaver}.x', '1.0-BETA.1'];
+        yield 'Custom format' => [$alphaVersion, '{major}.{minor}.{patch}.{build}-{pre-release:lower}-x', '1.0.0.0-beta-1'];
+        yield 'Custom format (v prefix)' => [$alphaVersion, 'v{major}.{minor}.{patch}.{build}-{pre-release:lower}-x', 'v1.0.0.0-beta-1'];
+        yield 'Custom format (V prefix)' => [$alphaVersion, 'V{major}.{minor}.{patch}.{build}-{pre-release:lower}-x', 'V1.0.0.0-beta-1'];
+        yield 'Custom format (without casing)' => [$alphaVersion, '{major}.{minor}-{pre-release}.x', '1.0-BETA.1'];
 
-        yield 'Custom format (with optional patch)' => [$versionWithoutPatch, '{major}.{minor}.{?patch}.{?build}-{metaver:lower}-x', '1.0'];
-        yield 'Custom format (with required patch)' => [$versionWithoutPatch, '{major}.{minor}.{patch}.{?build}-{metaver:lower}-x', '1.0.0'];
+        yield 'Custom format (with optional patch)' => [$versionWithoutPatch, '{major}.{minor}.{?patch}.{?build}-{pre-release:lower}-x', '1.0'];
+        yield 'Custom format (with required patch)' => [$versionWithoutPatch, '{major}.{minor}.{patch}.{?build}-{pre-release:lower}-x', '1.0.0'];
 
-        yield 'Custom format (with build)' => [$stableVersionWithBuild, '{major}.{minor}.{patch}.{?build}-{metaver:lower}-x', '1.1.0.1'];
-        yield 'Custom format (with required build)' => [$versionWithoutBuild, '{major}.{minor}.{patch}.{build}-{metaver:lower}-x', '1.0.0.0-beta-1'];
-        yield 'Custom format (with optional build)' => [$versionWithoutBuild, '{major}.{minor}.{patch}.{?build}-{metaver:lower}-x', '1.0.0-beta-1'];
+        yield 'Custom format (with build)' => [$stableVersionWithBuild, '{major}.{minor}.{patch}.{?build}-{pre-release:lower}-x', '1.1.0.1'];
+        yield 'Custom format (with required build)' => [$versionWithoutBuild, '{major}.{minor}.{patch}.{build}-{pre-release:lower}-x', '1.0.0.0-beta-1'];
+        yield 'Custom format (with optional build)' => [$versionWithoutBuild, '{major}.{minor}.{patch}.{?build}-{pre-release:lower}-x', '1.0.0-beta-1'];
     }
 
     #[Test]
@@ -432,10 +432,10 @@ class VersionTest extends TestCase
     }
 
     #[Test]
-    public function it_fails_with_stable_plus_metaver(): void
+    public function it_fails_with_stable_plus_pre_release(): void
     {
         $this->expectException('InvalidArgumentException');
-        $this->expectExceptionMessage('Unable to parse version "1.0.0-stable-5" Expects an SemVer compatible version. Metaver "stable" cannot have a number.');
+        $this->expectExceptionMessage('Unable to parse version "1.0.0-stable-5" Expects an SemVer compatible version. Pre-release "stable" cannot have a number.');
 
         Version::fromString('1.0.0-stable-5');
     }
@@ -513,18 +513,18 @@ class VersionTest extends TestCase
         // Anything not part of the input is ommited from the candidates
         // Unless filled-in
 
-        yield 'alpha 0 (with {build} but ommited from input)' => ['0.1.0', ['0.1.1', '0.2.0', '1.0.0-BETA1', '1.0.0'], '{major}.{minor}.{patch}.{build}-{metaver}x'];
-        yield 'alpha 0 (with patch} but ommited from pattern' => ['0.1.0', ['0.1.1', '0.2.0', '1.0.0-BETA1', '1.0.0'], '{major}.{minor}-{metaver}x'];
+        yield 'alpha 0 (with {build} but ommited from input)' => ['0.1.0', ['0.1.1', '0.2.0', '1.0.0-BETA1', '1.0.0'], '{major}.{minor}.{patch}.{build}-{pre-release}x'];
+        yield 'alpha 0 (with patch} but ommited from pattern' => ['0.1.0', ['0.1.1', '0.2.0', '1.0.0-BETA1', '1.0.0'], '{major}.{minor}-{pre-release}x'];
         yield 'alpha 0 with minimum pattern' => ['0.1.0', ['0.1.1', '0.2.0', '1.0.0-BETA1', '1.0.0'], '{major}.{minor}'];
 
-        yield 'alpha 0 with patch fill-in' => ['0.1', ['0.1.1', '0.2.0', '1.0.0-BETA1', '1.0.0'], '{major}.{minor}.{patch}.{build}-{metaver}x', Version::INPUT_FILL_PATCH];
-        yield 'alpha 0 with patch ignored' => ['0.1.5', ['0.2', '1.0-BETA1', '1.0'], '{major}.{minor}.{patch}.{build}-{metaver}x', Version::INPUT_IGNORE_PATCH];
+        yield 'alpha 0 with patch fill-in' => ['0.1', ['0.1.1', '0.2.0', '1.0.0-BETA1', '1.0.0'], '{major}.{minor}.{patch}.{build}-{pre-release}x', Version::INPUT_FILL_PATCH];
+        yield 'alpha 0 with patch ignored' => ['0.1.5', ['0.2', '1.0-BETA1', '1.0'], '{major}.{minor}.{patch}.{build}-{pre-release}x', Version::INPUT_IGNORE_PATCH];
 
         // Alternative format
-        yield 'beta (with casing)' => ['1.0.0-beta-5', ['1.0.0-Beta6', '1.0.0-Rc1', '1.0.0'], '{major}.{minor}.{patch}-{metaver:title}x'];
-        yield 'beta (with separator -)' => ['1.0.0-beta5', ['1.0.0-BETA-6', '1.0.0-RC-1', '1.0.0'], '{major}.{minor}.{patch}-{metaver}-x'];
-        yield 'beta (with separator .)' => ['1.0.0-beta5', ['1.0.0-BETA.6', '1.0.0-RC.1', '1.0.0'], '{major}.{minor}.{patch}-{metaver}.x'];
-        yield 'beta (without patch)' => ['1.0-beta-5', ['1.0-Beta-6', '1.0-Rc-1', '1.0'], '{major}.{minor}-{metaver:title}-x'];
+        yield 'beta (with casing)' => ['1.0.0-beta-5', ['1.0.0-Beta6', '1.0.0-Rc1', '1.0.0'], '{major}.{minor}.{patch}-{pre-release:title}x'];
+        yield 'beta (with separator -)' => ['1.0.0-beta5', ['1.0.0-BETA-6', '1.0.0-RC-1', '1.0.0'], '{major}.{minor}.{patch}-{pre-release}-x'];
+        yield 'beta (with separator .)' => ['1.0.0-beta5', ['1.0.0-BETA.6', '1.0.0-RC.1', '1.0.0'], '{major}.{minor}.{patch}-{pre-release}.x'];
+        yield 'beta (without patch)' => ['1.0-beta-5', ['1.0-Beta-6', '1.0-Rc-1', '1.0'], '{major}.{minor}-{pre-release:title}-x'];
     }
 
     /**
@@ -552,7 +552,7 @@ class VersionTest extends TestCase
         yield 'patch with patch 1' => ['0.1.1', '0.1.2', 'patch'];
         yield 'patch with patch stable' => ['1.0.0', '1.0.1', 'patch'];
 
-        // Patch with unstable. Increase metaver instead
+        // Patch with unstable. Increase pre-release instead
         yield 'patch with patch alpha' => ['1.0.0-alpha1', '1.0.0-alpha2', 'patch'];
         yield 'patch with patch beta' => ['1.0.0-beta1', '1.0.0-beta2', 'patch'];
         yield 'patch with patch rc' => ['1.0.0-rc1', '1.0.0-rc2', 'patch'];

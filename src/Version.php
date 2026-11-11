@@ -24,7 +24,7 @@ final class Version
      * * Patch identifier is optional.
      * * Build identifier is optional.
      */
-    public const string VERSION_REGEX = '(?P<major>\d++)\.(?P<minor>\d++)(?:\.(?P<patch>\d++))?(?:\.(?P<build>\d++))?([-.]?(?P<stability>beta|RC|alpha|stable)(?:[.-]?(?P<metaver>\d+))?)?';
+    public const string VERSION_REGEX = '(?P<major>\d++)\.(?P<minor>\d++)(?:\.(?P<patch>\d++))?(?:\.(?P<build>\d++))?([-.]?(?P<stability>beta|RC|alpha|stable)(?:[.-]?(?P<pre_release>\d+))?)?';
 
     // fromString() options (bitmask)
     public const int INPUT_IGNORE_BUILD = 1;
@@ -43,7 +43,7 @@ final class Version
 
     public static VersionFormatter $formatter;
     public readonly Stability $stability;
-    public readonly int $metaver;
+    public readonly int $preRelease;
 
     /** The version string in {@see $this::$outputFormat} format. */
     public readonly string $formatted;
@@ -64,14 +64,14 @@ final class Version
         public readonly int $minor,
         public readonly ?int $patch,
         Stability $stability = Stability::Stable,
-        int $metaver = 0,
+        int $preRelease = 0,
         public readonly ?int $build = null,
         ?string $outputFormat = null,
     ) {
         self::$formatter ??= new VersionFormatter();
 
         $this->stability = $major === 0 ? Stability::Alpha : $stability;
-        $this->metaver = $this->stability === Stability::Stable ? 0 : $metaver;
+        $this->preRelease = $this->stability === Stability::Stable ? 0 : $preRelease;
 
         $this->full = self::$formatter->format($this, VersionFormatter::FORMAT_FULL);
         $this->fullWithoutBuild = self::$formatter->format($this, VersionFormatter::FORMAT_WITHOUT_BUILD);
@@ -92,7 +92,7 @@ final class Version
                 $this->outputFormat,
                 patch: IdentifierMarker::WhenProvided,
                 build: IdentifierMarker::WhenProvided,
-                metaVer: true,
+                preRelease: true,
             );
         }
 
@@ -131,7 +131,7 @@ final class Version
                 'patch' => $this->patch,
                 'build' => $this->build,
                 'stability' => $this->stability,
-                'pre_release' => $this->metaver,
+                'pre_release' => $this->preRelease,
             ],
             'output_format' => $this->outputFormat,
             'format_of_increment' => $this->outputFormatOfIncrement,
@@ -183,12 +183,12 @@ final class Version
         $matches['patch'] = ($matches['patch'] ?? '') === '' ? null : (int) $matches['patch'];
         $matches['build'] = ($matches['build'] ?? '') === '' ? null : (int) $matches['build'];
         $matches['stability'] = strtolower($matches['stability'] ?? 'stable');
-        $matches['metaver'] = (int) ($matches['metaver'] ?? 0);
+        $matches['pre_release'] = (int) ($matches['pre_release'] ?? 0);
 
         self::processInputOptions($options, $matches);
 
-        if ($matches['stability'] === 'stable' && $matches['metaver'] > 0) {
-            throw new \InvalidArgumentException(\sprintf('Unable to parse version "%s" Expects an SemVer compatible version. Metaver "stable" cannot have a number.', $version));
+        if ($matches['stability'] === 'stable' && $matches['pre_release'] > 0) {
+            throw new \InvalidArgumentException(\sprintf('Unable to parse version "%s" Expects an SemVer compatible version. Pre-release "stable" cannot have a number.', $version));
         }
 
         return new self(
@@ -196,7 +196,7 @@ final class Version
             minor: (int) $matches['minor'],
             patch: $matches['patch'],
             stability: Stability::fromString($matches['stability']),
-            metaver: $matches['metaver'],
+            preRelease: $matches['pre_release'],
             build: $matches['build'],
             outputFormat: $outputFormat
         );
@@ -213,22 +213,22 @@ final class Version
      * - Must precede with `{major}.{minor}`;
      * - May proceed with a `{patch}` identifier (use `{?patch}` to only use when a patch was provided);
      * - May proceed with a `{build}` identifier (use `{?build}` to only use when a build was provided);
-     * - May proceed with `-{metaver}x` (prefix `dash` and `x` are mandatory) x maybe separated
+     * - May proceed with `-{pre-release}x` (prefix `dash` and `x` are mandatory) x maybe separated
      *   by a dot (`.`) character or dash (`-`) character, or no character (as shown);
      *
-     *   To change the casing of the meta-version, use `{metaver:<case>}`,
-     *   `<case>` can be `lower`, `upper` or `title`, like `{metaver:upper}`.
+     *   To change the casing of the pre-release, use `{pre-release:<case>}`,
+     *   `<case>` can be `lower`, `upper` or `title`, like `{pre-release:upper}`.
      *
-     * No other suffix is allowed after the meta-version identifier.
-     * Note: Identifiers (except for meta-version) must be separated by a dot (`.`) character
-     * and cannot be reordered. Cannot be used `{build}` before (or instead of) a `{patch}`.
+     * No other suffix is allowed after the pre-release identifier.
+     * Note: Identifiers (except for pre-release) must be separated by a dot (`.`) character
+     * and cannot be reordered. Cannot use `{build}` before (or instead of) a `{patch}`.
      *
-     * A Meta-version is only displayed when provided.
+     * A Pre-release is only displayed when provided.
      *
      * Full examples:
      *
-     * - `v{major}.{minor}.{patch}{?build}-{metaver:upper}x` (build is only displayed when provided)
-     * - `{major}.{minor}.{patch}.{build}-{metaver:lower}x`
+     * - `v{major}.{minor}.{patch}{?build}-{pre-release:upper}x` (build is only displayed when provided)
+     * - `{major}.{minor}.{patch}.{build}-{pre-release:lower}x`
      * - `{major}.{minor}.{?patch}` (patch is only displayed when provided)
      * - `{major}.{minor}` (minimal accepted version)
      *
@@ -279,7 +279,7 @@ final class Version
             return $this->computeVersionCandidatesForPreAlpha($options);
         }
 
-        // Latest is unstable, may increase stability or metaver (nothing else)
+        // Latest is unstable, may increase stability or pre-release (nothing else)
         // 1.0.1-beta1 is not accepted, an (un)stability only applies for x.0.0
         if ($this->stability->isLowerThan(Stability::Stable)) {
             return $this->computeVersionCandidatesForUnstable($options);
@@ -353,7 +353,7 @@ final class Version
      *
      * * Using 'major' on a beta release produces a stable release for *that* major version.
      * * Using 'stable' on an existing stable will increase the minor version.
-     * * Using 'patch' on an unstable release increases the metaver instead.
+     * * Using 'patch' on an unstable release increases the pre-release instead.
      *
      * @return self A new version instance with the changes applied
      */
@@ -364,13 +364,13 @@ final class Version
             VersionIdentifier::Patch => $this->getIncreaseOfPatch(),
             VersionIdentifier::Stable => $this->getIncreaseOfStable(),
             VersionIdentifier::Minor => $this->modifyForIncrement(VersionIdentifier::Minor, $this->minor + 1),
-            VersionIdentifier::Next => $this->getIncreaseOfNextPossibleMinorOrMeta(),
+            VersionIdentifier::Next => $this->getIncreaseOfNextPossibleMinorOrPreRelease(),
             VersionIdentifier::Build => $this->getIncreaseOfBuild(),
 
-            // Increase the metaver
+            // Increase the pre-release
             VersionIdentifier::Alpha,
             VersionIdentifier::Beta,
-            VersionIdentifier::Rc => $this->getIncreaseOfMetaver(Stability::fromString($type->name)),
+            VersionIdentifier::Rc => $this->getIncreaseOfPreRelease(Stability::fromString($type->name)),
         };
     }
 
@@ -409,7 +409,7 @@ final class Version
 
         if (self::bitmaskHas($options, self::INPUT_IGNORE_PRE_RELEASE)) {
             $matches['stability'] = 'stable';
-            $matches['metaver'] = 0;
+            $matches['pre_release'] = 0;
         }
     }
 
@@ -456,7 +456,7 @@ final class Version
         ['withPatch' => $withPatch, 'withBuild' => $withBuild, 'withPrereleases' => $withPrereleases] = $this->getCandidateOptions($options);
 
         // Pre first-stable, so 0.x-[rc,beta,stable] releases are not considered.
-        // Use alpha as stability with metaver 1, 0.2-alpha2 is simple ignored.
+        // Use alpha as stability with pre-release 1, 0.2-alpha2 is simple ignored.
         // If anyone really uses this... not our problem :)
 
         $candidates = [];
@@ -484,7 +484,7 @@ final class Version
     }
 
     /**
-     * Version is "unstable", may increase stability or metaver (nothing else).
+     * Version is "unstable", may increase stability or pre-release (nothing else).
      *
      * 1.0.1-beta1 is not accepted, an (un)stability only applies for x.0.0
      *
@@ -496,7 +496,7 @@ final class Version
         ['withPrereleases' => $withPrereleases] = $this->getCandidateOptions($options);
 
         if (\in_array($this->stability, $withPrereleases, true)) {
-            $candidates[] = $this->modifyStabilityForIncrement($this->stability, $this->metaver + 1);
+            $candidates[] = $this->modifyStabilityForIncrement($this->stability, $this->preRelease + 1);
         }
 
         $s = $this->stability->increment();
@@ -516,18 +516,18 @@ final class Version
 
     private function getIncreaseOfPatch(): self
     {
-        if ($this->major > 0 && $this->metaver > 0) {
-            return $this->getIncreaseOfNextPossibleMinorOrMeta();
+        if ($this->major > 0 && $this->preRelease > 0) {
+            return $this->getIncreaseOfNextPossibleMinorOrPreRelease();
         }
 
         return $this->modifyForIncrement(VersionIdentifier::Patch, ($this->patch ?? 0) + 1);
     }
 
     #[\NoDiscard]
-    private function getIncreaseOfNextPossibleMinorOrMeta(): self
+    private function getIncreaseOfNextPossibleMinorOrPreRelease(): self
     {
         if ($this->major > 0 && $this->stability->isLowerThan(Stability::Stable)) {
-            return $this->modifyStabilityForIncrement($this->stability, $this->metaver + 1);
+            return $this->modifyStabilityForIncrement($this->stability, $this->preRelease + 1);
         }
 
         return $this->modifyForIncrement(VersionIdentifier::Minor, $this->minor + 1);
@@ -544,10 +544,10 @@ final class Version
     }
 
     #[\NoDiscard]
-    private function getIncreaseOfMetaver(Stability $stability): self
+    private function getIncreaseOfPreRelease(Stability $stability): self
     {
         if ($this->stability === $stability) {
-            return $this->modifyStabilityForIncrement($this->stability, $this->metaver + 1);
+            return $this->modifyStabilityForIncrement($this->stability, $this->preRelease + 1);
         }
 
         if ($stability->isHigherThan($this->stability)) {
@@ -589,7 +589,7 @@ final class Version
             VersionIdentifier::Major => new self($newValue, 0, $this->patchEmpty, build: $this->buildEmpty, outputFormat: $this->outputFormatOfIncrement),
             VersionIdentifier::Minor => new self($this->major, $newValue, $this->patchEmpty, build: $this->buildEmpty, outputFormat: $this->outputFormatOfIncrement),
             VersionIdentifier::Patch => new self($this->major, $this->minor, $newValue, build: $this->buildEmpty, outputFormat: $this->outputFormatOfIncrement),
-            VersionIdentifier::Build => new self($this->major, $this->minor, $this->patch, $this->stability, $this->metaver, build: $newValue, outputFormat: $this->outputFormatOfIncrement),
+            VersionIdentifier::Build => new self($this->major, $this->minor, $this->patch, $this->stability, $this->preRelease, build: $newValue, outputFormat: $this->outputFormatOfIncrement),
             default => throw new \LogicException(\sprintf('Unsupported version identifier "%s" provided. Please report this bug.', $type->name)),
         };
     }
