@@ -203,6 +203,64 @@ final class Version
     }
 
     /**
+     * Create a Version object.
+     *
+     * Negative version numbers are not allowed.
+     * Leaving any argument as null will result in the default value being used.
+     *
+     * Note that setting a build identifier without the patch implicitly
+     * sets the patch to 0.
+     *
+     * @param string|null $outputFormat See {@see format()} for details defaults to {@see VersionFormatter::FORMAT_DEFAULT}
+     */
+    public static function create(int $major = 0, int $minor = 0, ?int $patch = null, ?int $build = null, ?Stability $stability = null, int $preRelease = 0, ?string $outputFormat = null): self
+    {
+        if ($stability === null && $preRelease > 0) {
+            throw new \InvalidArgumentException('Pre-release cannot have a positive number when no "stability" is provided.');
+        }
+
+        if ($stability === Stability::Stable && $preRelease > 0) {
+            throw new \InvalidArgumentException('Stability "Stable" cannot have a pre-release number.');
+        }
+
+        if ($major === 0 && $stability === Stability::Stable) {
+            throw new \InvalidArgumentException('Cannot have "stability" with "Stable" when "major" is 0, use "Alpha" instead or leave the argument empty.');
+        }
+
+        if ($major > 0 && $preRelease === 0 && $stability !== null && $stability->isLowerThan(Stability::Stable)) {
+            throw new \InvalidArgumentException('Pre-releases must have a positive number.');
+        }
+
+        if ($build !== null && $patch === null) {
+            $patch = 0;
+        }
+
+        foreach (['major', 'minor', 'patch', 'build', 'preRelease'] as $identifier) {
+            if (${$identifier} === null) {
+                continue;
+            }
+
+            if (${$identifier} < 0) {
+                throw new \InvalidArgumentException(\sprintf('Version indentifier "%s" cannot be negative.', $identifier));
+            }
+        }
+
+        if ($stability === null) {
+            $stability = Stability::Stable;
+        }
+
+        return new self(
+            major: $major,
+            minor: $minor,
+            patch: $patch,
+            stability: $stability,
+            preRelease: $preRelease,
+            build: $build,
+            outputFormat: $outputFormat,
+        );
+    }
+
+    /**
      * Returns a formatted version string.
      *
      * The version format follows some specific rules.
