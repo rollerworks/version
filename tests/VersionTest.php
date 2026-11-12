@@ -554,6 +554,40 @@ class VersionTest extends TestCase
         self::assertFalse($beta2->higherThan($beta1WithBuild, false));
     }
 
+    #[Test]
+    public function it_compares_versions_with_helper(): void
+    {
+        $a = Version::fromString('1.1.0');
+        $b = Version::fromString('1.2.0');
+
+        $aWithBuild = Version::fromString('1.1.0.1');
+        $bWithBuild = Version::fromString('1.1.0.2');
+
+        $a1WithBuild = Version::fromString('1.0.0.0-BETA1');
+        $b1WithBuild = Version::fromString('1.0.0.5-BETA1');
+
+        // Equal
+        self::assertSame($a->compareTo($a), 0);
+        self::assertSame($aWithBuild->compareTo($aWithBuild, false), 0);
+        self::assertSame($a1WithBuild->compareTo($b1WithBuild), 0); // Build ignored
+        self::assertSame($a1WithBuild->compareTo($b1WithBuild), 0);
+        self::assertSame($a->compareTo($aWithBuild), 0); // Build ignored
+
+        // Lower than
+        self::assertSame($a->compareTo($b), -1);
+        self::assertSame($aWithBuild->compareTo($bWithBuild, false), -1);
+
+        self::assertSame($a->compareTo($b, true, \SortDirection::Ascending), 1);
+        self::assertSame($aWithBuild->compareTo($bWithBuild, false, \SortDirection::Ascending), 1);
+
+        // Higher than
+        self::assertSame($b->compareTo($a), 1);
+        self::assertSame($bWithBuild->compareTo($aWithBuild, false), 1);
+
+        self::assertSame($b->compareTo($a, true, \SortDirection::Ascending), -1);
+        self::assertSame($bWithBuild->compareTo($aWithBuild, false, \SortDirection::Ascending), -1);
+    }
+
     /**
      * @return iterable<string, array{0: Version, 1: string|null, 2: string}>
      */

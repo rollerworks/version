@@ -405,6 +405,32 @@ final class Version
     }
 
     /**
+     * A helper method for comparing two versions.
+     *
+     * Example:
+     * ```
+     * usort($versions, static function (Version $a, Version $b): int {
+     *     return $a->compareTo($b, \SortDirection::Descending);
+     * });
+     * ```
+     *
+     * @return 0|1|-1
+     */
+    public function compareTo(self $second, bool $ignoreBuild = true, \SortDirection $direction = \SortDirection::Descending): int
+    {
+        if ($this->equals($second, $ignoreBuild)) {
+            return 0;
+        }
+
+        $lowerThan = $this->lowerThan($second, $ignoreBuild);
+
+        return match ($direction) {
+            \SortDirection::Ascending => $lowerThan ? 1 : -1,
+            \SortDirection::Descending => $lowerThan ? -1 : 1,
+        };
+    }
+
+    /**
      * Returns the increased Version based on the type.
      *
      * Note:
