@@ -365,6 +365,22 @@ class VersionTest extends TestCase
     }
 
     #[Test]
+    public function it_creates_versions_list(): void
+    {
+        self::assertEquals([
+            '1.0.5.0' => Version::fromString('1.0.5'),
+            '1.0.6.9' => Version::fromString('1.0.6.9'),
+            '1.0.0.0' => Version::fromString('1.0.0'),
+        ], Version::createFromList(['1.0.5', '1.0.6.9', Version::fromString('1.0.0')]));
+
+        self::assertEquals([
+            '1.1.0.0' => Version::fromString('1.1.0.0'),
+            '1.0.6.9' => Version::fromString('1.0.6.9'),
+            '1.0.0.0' => Version::fromString('1.0.0.0'),
+        ], Version::createFromList(['1.1', '1.0.6.9', Version::fromString('1.0.0')], options: Version::INPUT_FILL_BUILD));
+    }
+
+    #[Test]
     #[DataProvider('provideInvalidInputOptions')]
     public function reject_invalid_input_options(int $options, string $message): void
     {

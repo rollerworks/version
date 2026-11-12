@@ -261,6 +261,49 @@ final class Version
     }
 
     /**
+     * Creates a (sorted) list of Version objects.
+     *
+     * Version objects are converted to strings before parsing, and then
+     * passed to {@see self::fromString()} as any value of the list.
+     *
+     * Use the `$outputFormat` parameter to specify the output format for the
+     * version strings. If not provided, the default format will be used.
+     *
+     * Use the `$options` parameter to specify additional options for parsing
+     * the version strings.
+     *
+     * @param (string|Version)[]  $versions      An array of version strings (of Version objects)
+     * @param \SortDirection|null $sortDirection Sort direction (optional)
+     * @param int                 $options       Bitmask options {@see Version::INPUT_*}
+     *
+     * @return array<string, Version> The key contains the `$full` version string {@see Version::$full}
+     */
+    public static function createFromList(array $versions, ?\SortDirection $sortDirection = null, ?string $outputFormat = null, int $options = 0): array
+    {
+        $list = [];
+
+        foreach ($versions as $ver) {
+            if ($ver instanceof self) {
+                $ver = $ver->format($outputFormat);
+            }
+
+            $version = self::fromString($ver, $outputFormat, $options);
+            $list[$version->full] = $version;
+        }
+
+        if ($sortDirection) {
+            usort($list, static fn (Version $a, Version $b): int => $a->compareTo($b, ignoreBuild: false, direction: $sortDirection));
+        }
+
+        /**
+         * Sorting changes the output type so we need to inform PhpStan the type is correct.
+         *
+         * @var array<string, Version> $list
+         */
+        return $list;
+    }
+
+    /**
      * Returns a formatted version string.
      *
      * The version format follows some specific rules.
