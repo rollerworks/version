@@ -203,6 +203,107 @@ final class Version
     }
 
     /**
+     * Create a Version object.
+     *
+     * Negative version numbers are not allowed.
+     * Leaving any argument as null will result in the default value being used.
+     *
+     * Note that setting a build identifier without the patch implicitly
+     * sets the patch to 0.
+     *
+     * @param string|null $outputFormat See {@see format()} for details defaults to {@see VersionFormatter::FORMAT_DEFAULT}
+     */
+    public static function create(int $major = 0, int $minor = 0, ?int $patch = null, ?int $build = null, ?Stability $stability = null, int $preRelease = 0, ?string $outputFormat = null): self
+    {
+        if ($stability === null && $preRelease > 0) {
+            throw new \InvalidArgumentException('Pre-release cannot have a positive number when no "stability" is provided.');
+        }
+
+        if ($stability === Stability::Stable && $preRelease > 0) {
+            throw new \InvalidArgumentException('Stability "Stable" cannot have a pre-release number.');
+        }
+
+        if ($major === 0 && $stability === Stability::Stable) {
+            throw new \InvalidArgumentException('Cannot have "stability" with "Stable" when "major" is 0, use "Alpha" instead or leave the argument empty.');
+        }
+
+        if ($major > 0 && $preRelease === 0 && $stability !== null && $stability->isLowerThan(Stability::Stable)) {
+            throw new \InvalidArgumentException('Pre-releases must have a positive number.');
+        }
+
+        if ($build !== null && $patch === null) {
+            $patch = 0;
+        }
+
+        foreach (['major', 'minor', 'patch', 'build', 'preRelease'] as $identifier) {
+            if (${$identifier} === null) {
+                continue;
+            }
+
+            if (${$identifier} < 0) {
+                throw new \InvalidArgumentException(\sprintf('Version indentifier "%s" cannot be negative.', $identifier));
+            }
+        }
+
+        if ($stability === null) {
+            $stability = Stability::Stable;
+        }
+
+        return new self(
+            major: $major,
+            minor: $minor,
+            patch: $patch,
+            stability: $stability,
+            preRelease: $preRelease,
+            build: $build,
+            outputFormat: $outputFormat,
+        );
+    }
+
+    /**
+     * Creates a (sorted) list of Version objects.
+     *
+     * Version objects are converted to strings before parsing, and then
+     * passed to {@see self::fromString()} as any value of the list.
+     *
+     * Use the `$outputFormat` parameter to specify the output format for the
+     * version strings. If not provided, the default format will be used.
+     *
+     * Use the `$options` parameter to specify additional options for parsing
+     * the version strings.
+     *
+     * @param (string|Version)[]  $versions      An array of version strings (of Version objects)
+     * @param \SortDirection|null $sortDirection Sort direction (optional)
+     * @param int                 $options       Bitmask options {@see Version::INPUT_*}
+     *
+     * @return array<string, Version> The key contains the `$full` version string {@see Version::$full}
+     */
+    public static function createFromList(array $versions, ?\SortDirection $sortDirection = null, ?string $outputFormat = null, int $options = 0): array
+    {
+        $list = [];
+
+        foreach ($versions as $ver) {
+            if ($ver instanceof self) {
+                $ver = $ver->format($outputFormat);
+            }
+
+            $version = self::fromString($ver, $outputFormat, $options);
+            $list[$version->full] = $version;
+        }
+
+        if ($sortDirection) {
+            usort($list, static fn (Version $a, Version $b): int => $a->compareTo($b, ignoreBuild: false, direction: $sortDirection));
+        }
+
+        /**
+         * Sorting changes the output type so we need to inform PhpStan the type is correct.
+         *
+         * @var array<string, Version> $list
+         */
+        return $list;
+    }
+
+    /**
      * Returns a formatted version string.
      *
      * The version format follows some specific rules.
@@ -344,6 +445,32 @@ final class Version
     public function higherThanOrEqual(self $second, bool $ignoreBuild = true): bool
     {
         return $this->compareWith($second, '>=', $ignoreBuild);
+    }
+
+    /**
+     * A helper method for comparing two versions.
+     *
+     * Example:
+     * ```
+     * usort($versions, static function (Version $a, Version $b): int {
+     *     return $a->compareTo($b, \SortDirection::Descending);
+     * });
+     * ```
+     *
+     * @return 0|1|-1
+     */
+    public function compareTo(self $second, bool $ignoreBuild = true, \SortDirection $direction = \SortDirection::Descending): int
+    {
+        if ($this->equals($second, $ignoreBuild)) {
+            return 0;
+        }
+
+        $lowerThan = $this->lowerThan($second, $ignoreBuild);
+
+        return match ($direction) {
+            \SortDirection::Ascending => $lowerThan ? 1 : -1,
+            \SortDirection::Descending => $lowerThan ? -1 : 1,
+        };
     }
 
     /**

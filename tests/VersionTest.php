@@ -18,6 +18,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Rollerworks\Component\Version\Stability;
 use Rollerworks\Component\Version\Version;
+use Rollerworks\Component\Version\VersionFormatter;
 use Rollerworks\Component\Version\VersionIdentifier;
 
 /**
@@ -61,7 +62,7 @@ class VersionTest extends TestCase
     }
 
     #[Test]
-    public function it_creates_with_explicit_stable(): void
+    public function it_creates_from_string_with_explicit_stable(): void
     {
         $version = Version::fromString('1.0.0-stable');
 
@@ -76,7 +77,7 @@ class VersionTest extends TestCase
     }
 
     #[Test]
-    public function it_creates_without_patch(): void
+    public function it_creates_from_string_without_patch(): void
     {
         $version = Version::fromString('1.0');
 
@@ -91,7 +92,7 @@ class VersionTest extends TestCase
     }
 
     #[Test]
-    public function it_creates_with_build(): void
+    public function it_creates_from_string_with_build(): void
     {
         $version = Version::fromString('1.0.0.5');
 
@@ -121,7 +122,7 @@ class VersionTest extends TestCase
     }
 
     #[Test]
-    public function it_creates_with_ignored_patch(): void
+    public function it_creates_from_string_with_ignored_patch(): void
     {
         $version = Version::fromString('1.0.5.5', options: Version::INPUT_IGNORE_PATCH);
 
@@ -151,7 +152,7 @@ class VersionTest extends TestCase
     }
 
     #[Test]
-    public function it_creates_with_ignored_build(): void
+    public function it_creates_from_string_with_ignored_build(): void
     {
         $version = Version::fromString('1.0.1.5', options: Version::INPUT_IGNORE_BUILD);
         self::assertEquals(1, $version->major);
@@ -180,7 +181,7 @@ class VersionTest extends TestCase
     }
 
     #[Test]
-    public function it_creates_with_ignored_pre_release(): void
+    public function it_creates_from_string_with_ignored_pre_release(): void
     {
         $version = Version::fromString('1.0.5.3-beta1', options: Version::INPUT_IGNORE_PRE_RELEASE);
 
@@ -195,7 +196,7 @@ class VersionTest extends TestCase
     }
 
     #[Test]
-    public function it_creates_with_filled_patch(): void
+    public function it_creates_from_string_with_filled_patch(): void
     {
         $version = Version::fromString('1.0', options: Version::INPUT_FILL_PATCH);
 
@@ -220,7 +221,7 @@ class VersionTest extends TestCase
     }
 
     #[Test]
-    public function it_creates_with_filled_build(): void
+    public function it_creates_from_string_with_filled_build(): void
     {
         $version = Version::fromString('1.0', options: Version::INPUT_FILL_BUILD);
         self::assertEquals(1, $version->major);
@@ -254,13 +255,199 @@ class VersionTest extends TestCase
     }
 
     #[Test]
+    public function it_creates_a_new_version(): void
+    {
+        $version = Version::create();
+        self::assertSame(0, $version->major);
+        self::assertSame(0, $version->minor);
+        self::assertNull($version->patch);
+        self::assertNull($version->build);
+        self::assertSame(Stability::Alpha, $version->stability);
+        self::assertSame(0, $version->preRelease);
+        self::assertSame('0.0.0.0', $version->full);
+        self::assertSame('0.0.0', $version->fullWithoutBuild);
+        self::assertSame(VersionFormatter::FORMAT_DEFAULT, $version->outputFormat);
+
+        $version = Version::create(stability: Stability::Alpha);
+        self::assertSame(0, $version->major);
+        self::assertSame(0, $version->minor);
+        self::assertNull($version->patch);
+        self::assertNull($version->build);
+        self::assertSame(Stability::Alpha, $version->stability);
+        self::assertSame(0, $version->preRelease);
+        self::assertSame('0.0.0.0', $version->full);
+        self::assertSame('0.0.0', $version->fullWithoutBuild);
+        self::assertSame(VersionFormatter::FORMAT_DEFAULT, $version->outputFormat);
+
+        $version = Version::create(0, 5);
+        self::assertSame(0, $version->major);
+        self::assertSame(5, $version->minor);
+        self::assertNull($version->patch);
+        self::assertNull($version->build);
+        self::assertSame(Stability::Alpha, $version->stability);
+        self::assertSame(0, $version->preRelease);
+        self::assertSame('0.5.0.0', $version->full);
+        self::assertSame('0.5.0', $version->fullWithoutBuild);
+        self::assertSame(VersionFormatter::FORMAT_DEFAULT, $version->outputFormat);
+
+        $version = Version::create(5);
+        self::assertSame(5, $version->major);
+        self::assertSame(0, $version->minor);
+        self::assertNull($version->patch);
+        self::assertNull($version->build);
+        self::assertSame(Stability::Stable, $version->stability);
+        self::assertSame(0, $version->preRelease);
+        self::assertSame('5.0.0.0', $version->full);
+        self::assertSame('5.0.0', $version->fullWithoutBuild);
+
+        $version = Version::create(5, 3);
+        self::assertSame(5, $version->major);
+        self::assertSame(3, $version->minor);
+        self::assertNull($version->patch);
+        self::assertNull($version->build);
+        self::assertSame(Stability::Stable, $version->stability);
+        self::assertSame(0, $version->preRelease);
+        self::assertSame('5.3.0.0', $version->full);
+        self::assertSame('5.3.0', $version->fullWithoutBuild);
+
+        $version = Version::create(1, 0, 5);
+        self::assertSame(1, $version->major);
+        self::assertSame(0, $version->minor);
+        self::assertSame(5, $version->patch);
+        self::assertNull($version->build);
+        self::assertSame(Stability::Stable, $version->stability);
+        self::assertSame(0, $version->preRelease);
+        self::assertSame('1.0.5.0', $version->full);
+        self::assertSame('1.0.5', $version->fullWithoutBuild);
+
+        $version = Version::create(1, 0, 5, build: 8);
+        self::assertSame(1, $version->major);
+        self::assertSame(0, $version->minor);
+        self::assertSame(5, $version->patch);
+        self::assertSame(8, $version->build);
+        self::assertSame(Stability::Stable, $version->stability);
+        self::assertSame(0, $version->preRelease);
+        self::assertSame('1.0.5.8', $version->full);
+        self::assertSame('1.0.5', $version->fullWithoutBuild);
+
+        $version = Version::create(1, 0, build: 8);
+        self::assertSame(1, $version->major);
+        self::assertSame(0, $version->minor);
+        self::assertSame(0, $version->patch);
+        self::assertSame(8, $version->build);
+        self::assertSame(Stability::Stable, $version->stability);
+        self::assertSame(0, $version->preRelease);
+        self::assertSame('1.0.0.8', $version->full);
+        self::assertSame('1.0.0', $version->fullWithoutBuild);
+
+        $version = Version::create(1, 0, 5, build: 8, stability: Stability::Alpha, preRelease: 1);
+        self::assertSame(1, $version->major);
+        self::assertSame(0, $version->minor);
+        self::assertSame(5, $version->patch);
+        self::assertSame(8, $version->build);
+        self::assertSame(Stability::Alpha, $version->stability);
+        self::assertSame(1, $version->preRelease);
+        self::assertSame('1.0.5.8-ALPHA1', $version->full);
+        self::assertSame('1.0.5-ALPHA1', $version->fullWithoutBuild);
+
+        $version = Version::create(1, 0, 5, build: 8, stability: Stability::Alpha, preRelease: 1, outputFormat: '{major}.{minor}.{?patch}-{pre-release:title}.x');
+        self::assertSame(1, $version->major);
+        self::assertSame(0, $version->minor);
+        self::assertSame(5, $version->patch);
+        self::assertSame(8, $version->build);
+        self::assertSame(Stability::Alpha, $version->stability);
+        self::assertSame(1, $version->preRelease);
+        self::assertSame('1.0.5.8-ALPHA1', $version->full);
+        self::assertSame('1.0.5-ALPHA1', $version->fullWithoutBuild);
+        self::assertSame('1.0.5-Alpha.1', $version->formatted);
+        self::assertSame('{major}.{minor}.{?patch}-{pre-release:title}.x', $version->outputFormat);
+        self::assertSame('{major}.{minor}.{?patch}.{?build}-{pre-release:title}.x', $version->outputFormatOfIncrement);
+    }
+
+    #[Test]
+    public function it_creates_versions_list(): void
+    {
+        self::assertEquals([
+            '1.0.5.0' => Version::fromString('1.0.5'),
+            '1.0.6.9' => Version::fromString('1.0.6.9'),
+            '1.0.0.0' => Version::fromString('1.0.0'),
+        ], Version::createFromList(['1.0.5', '1.0.6.9', Version::fromString('1.0.0')]));
+
+        self::assertEquals([
+            '1.1.0.0' => Version::fromString('1.1.0.0'),
+            '1.0.6.9' => Version::fromString('1.0.6.9'),
+            '1.0.0.0' => Version::fromString('1.0.0.0'),
+        ], Version::createFromList(['1.1', '1.0.6.9', Version::fromString('1.0.0')], options: Version::INPUT_FILL_BUILD));
+    }
+
+    #[Test]
     #[DataProvider('provideInvalidInputOptions')]
     public function reject_invalid_input_options(int $options, string $message): void
     {
         $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage($message);
+        $this->expectExceptionMessageContains($message);
 
         Version::fromString('1.0.5.8', options: $options);
+    }
+
+    /**
+     * @return iterable<array{0: string}>
+     */
+    public static function provide_version_identifiers(): iterable
+    {
+        yield ['major'];
+
+        yield ['minor'];
+
+        yield ['patch'];
+
+        yield ['build'];
+    }
+
+    #[Test]
+    #[DataProvider('provide_version_identifiers')]
+    public function it_fails_with_negative_version_identifiers(string $identifier): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+
+        $this->expectExceptionMessageContains(\sprintf('Version indentifier "%s" cannot be negative.', $identifier));
+        \call_user_func_array([Version::class, 'create'], [$identifier => -1]);
+    }
+
+    #[Test]
+    public function it_rejects_stable_with_pre_release(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessageContains('Stability "Stable" cannot have a pre-release number.');
+
+        Version::create(stability: Stability::Stable, preRelease: 5);
+    }
+
+    #[Test]
+    public function it_rejects_pre_release_without_stability(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessageContains('Pre-release cannot have a positive number when no "stability" is provided.');
+
+        Version::create(preRelease: 5);
+    }
+
+    #[Test]
+    public function it_rejects_pre_release_without_positive_number(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessageContains('Pre-releases must have a positive number.');
+
+        Version::create(major: 1, stability: Stability::Alpha);
+    }
+
+    #[Test]
+    public function it_rejects_unstable_major_with_stable(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessageContains('Cannot have "stability" with "Stable" when "major" is 0, use "Alpha" instead or leave the argument empty.');
+
+        Version::create(stability: Stability::Stable);
     }
 
     /**
@@ -383,6 +570,40 @@ class VersionTest extends TestCase
         self::assertFalse($beta2->higherThan($beta1WithBuild, false));
     }
 
+    #[Test]
+    public function it_compares_versions_with_helper(): void
+    {
+        $a = Version::fromString('1.1.0');
+        $b = Version::fromString('1.2.0');
+
+        $aWithBuild = Version::fromString('1.1.0.1');
+        $bWithBuild = Version::fromString('1.1.0.2');
+
+        $a1WithBuild = Version::fromString('1.0.0.0-BETA1');
+        $b1WithBuild = Version::fromString('1.0.0.5-BETA1');
+
+        // Equal
+        self::assertSame($a->compareTo($a), 0);
+        self::assertSame($aWithBuild->compareTo($aWithBuild, false), 0);
+        self::assertSame($a1WithBuild->compareTo($b1WithBuild), 0); // Build ignored
+        self::assertSame($a1WithBuild->compareTo($b1WithBuild), 0);
+        self::assertSame($a->compareTo($aWithBuild), 0); // Build ignored
+
+        // Lower than
+        self::assertSame($a->compareTo($b), -1);
+        self::assertSame($aWithBuild->compareTo($bWithBuild, false), -1);
+
+        self::assertSame($a->compareTo($b, true, \SortDirection::Ascending), 1);
+        self::assertSame($aWithBuild->compareTo($bWithBuild, false, \SortDirection::Ascending), 1);
+
+        // Higher than
+        self::assertSame($b->compareTo($a), 1);
+        self::assertSame($bWithBuild->compareTo($aWithBuild, false), 1);
+
+        self::assertSame($b->compareTo($a, true, \SortDirection::Ascending), -1);
+        self::assertSame($bWithBuild->compareTo($aWithBuild, false, \SortDirection::Ascending), -1);
+    }
+
     /**
      * @return iterable<string, array{0: Version, 1: string|null, 2: string}>
      */
@@ -426,7 +647,7 @@ class VersionTest extends TestCase
     public function it_fails_for_invalid_format(): void
     {
         $this->expectException('InvalidArgumentException');
-        $this->expectExceptionMessage('Unable to parse version "1.0.0-WAT"');
+        $this->expectExceptionMessageContains('Unable to parse version "1.0.0-WAT"');
 
         Version::fromString('1.0.0-WAT');
     }
@@ -435,7 +656,7 @@ class VersionTest extends TestCase
     public function it_fails_with_stable_plus_pre_release(): void
     {
         $this->expectException('InvalidArgumentException');
-        $this->expectExceptionMessage('Unable to parse version "1.0.0-stable-5" Expects an SemVer compatible version. Pre-release "stable" cannot have a number.');
+        $this->expectExceptionMessageContains('Unable to parse version "1.0.0-stable-5" Expects an SemVer compatible version. Pre-release "stable" cannot have a number.');
 
         Version::fromString('1.0.0-stable-5');
     }
@@ -609,5 +830,15 @@ class VersionTest extends TestCase
             Version::fromString($expected),
             Version::fromString($current)->getNextIncreaseOf(VersionIdentifier::from($stability)),
         );
+    }
+
+    private function expectExceptionMessageContains(string $message): void
+    {
+        /** @phpstan-ignore-next-line PHPUnit forward compatibility */
+        if (method_exists($this, 'expectExceptionMessageIsOrContains')) {
+            $this->expectExceptionMessageIsOrContains($message);
+        } else {
+            $this->expectExceptionMessage($message);
+        }
     }
 }
