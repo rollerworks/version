@@ -23,6 +23,13 @@ final class VersionFormatter
     public const string FORMAT_DEFAULT = '{major}.{minor}.{?patch}.{?build}-{pre-release:upper}x';
 
     /**
+     * Full Output-format same as FORMAT_DEFAULT, but with a relative-version identifier.
+     *
+     * Either: "1.0-ALPHA1", "1.0.0", "1.0.0.0", "1.0.0.5-ALPHA1", or "1.x" for a relative version
+     */
+    public const string FORMAT_DEFAULT_WITH_RELATIVE = '{relative}|{major}.{minor}.{?patch}.{?build}-{pre-release:upper}x';
+
+    /**
      * Full Output-format (with `{patch}`, `{build}`, uppercase pre-release without seperator).
      *
      * Either: "1.0.0-ALPHA1", "1.0.0.0", or "1.0.0-ALPHA1", "1.0.0.5" (when build number is set)
@@ -44,6 +51,8 @@ final class VersionFormatter
     /** @var array{casing: string, separator: string}|null */
     private ?array $preReleasePattern = null;
 
+    private ?bool $relative = null;
+
     /**
      * @throws \InvalidArgumentException when the format is invalid
      */
@@ -51,6 +60,7 @@ final class VersionFormatter
     {
         $this->prefix = '';
         $this->preReleasePattern = ['casing' => 'upper', 'separator' => ''];
+        $this->relative = false;
 
         if ($format === self::FORMAT_FULL) {
             $this->patchPattern = IdentifierMarker::Always;
@@ -58,6 +68,10 @@ final class VersionFormatter
         } elseif ($format === self::FORMAT_DEFAULT) {
             $this->patchPattern = IdentifierMarker::WhenProvided;
             $this->buildPattern = IdentifierMarker::WhenProvided;
+        } elseif ($format === self::FORMAT_DEFAULT_WITH_RELATIVE) {
+            $this->patchPattern = IdentifierMarker::WhenProvided;
+            $this->buildPattern = IdentifierMarker::WhenProvided;
+            $this->relative = true;
         } elseif ($format === self::FORMAT_WITHOUT_BUILD) {
             $this->patchPattern = IdentifierMarker::Always;
             $this->buildPattern = IdentifierMarker::Omit;
@@ -66,6 +80,13 @@ final class VersionFormatter
         }
 
         $versionString = $this->prefix;
+
+        if ($this->relative && $version->relative !== null) {
+            $versionString .= $version->relative;
+
+            return $versionString;
+        }
+
         $versionString .= \sprintf('%d.%d', $version->major, $version->minor);
 
         $versionString .= $this->formatVersionIdentifier($this->patchPattern, $version->patch);
@@ -89,10 +110,12 @@ final class VersionFormatter
      * @param 'v'|'V'|null                 $prefix
      * @param 'upper'|'lower'|'title'|null $preReleaseCasing
      * @param '-'|''|null                  $preReleaseSeparator
+     * @param bool|null                    $relative            Add `{relative}|` to display a relative version
+     *                                                          when one was set
      *
      * @throws \InvalidArgumentException when the format is invalid or when the pre-release options are invalid
      */
-    public function modifyFormat(string $original, ?string $prefix = null, ?IdentifierMarker $patch = null, ?IdentifierMarker $build = null, ?bool $preRelease = null, ?string $preReleaseCasing = null, ?string $preReleaseSeparator = null): string
+    public function modifyFormat(string $original, ?string $prefix = null, ?IdentifierMarker $patch = null, ?IdentifierMarker $build = null, ?bool $preRelease = null, ?string $preReleaseCasing = null, ?string $preReleaseSeparator = null, ?bool $relative = null): string
     {
         $this->parse($original);
 
@@ -109,6 +132,7 @@ final class VersionFormatter
         }
 
         $this->prefix = $prefix ?? $this->prefix;
+        $this->relative = $relative ?? $this->relative;
         $this->patchPattern = $patch ?? $this->patchPattern;
         $this->buildPattern = $build ?? $this->buildPattern;
 
@@ -120,7 +144,10 @@ final class VersionFormatter
             throw new \InvalidArgumentException('Pre-release options "$preReleaseCasing" and/or "$preReleaseSeparator" cannot be provided when pre-release is disabled, pass null to these arguments or remove them from the invocation.');
         }
 
-        $format = $this->prefix . '{major}.{minor}' . $this->patchPattern->toFormat('patch') . $this->buildPattern->toFormat('build');
+        $format = $this->prefix;
+        $format .= $this->relative !== false ? '{relative}|' : '';
+        $format .= '{major}.{minor}';
+        $format .= $this->patchPattern->toFormat('patch') . $this->buildPattern->toFormat('build');
 
         if ($preRelease ?? ($this->preReleasePattern !== null)) {
             $format .= \sprintf(
@@ -141,11 +168,12 @@ final class VersionFormatter
             throw new \InvalidArgumentException(\sprintf('Invalid format "%s" provided. Expects something like: "{major}.{minor}.{patch}".', $format));
         }
 
-        if (! preg_match('/^(?P<prefix>[vV])?\{major}\.\{minor}?/', $format, $matches)) {
-            throw new \InvalidArgumentException(\sprintf('Invalid format "%s" provided. Expects format to start with optional (v or V) followed by "{major}.{minor}"', $format));
+        if (! preg_match('/^(?P<prefix>[vV])?(?P<relative>\\{relative}\\|)?\{major}\.\{minor}?/', $format, $matches)) {
+            throw new \InvalidArgumentException(\sprintf('Invalid format "%s" provided. Expects format to start with optional (v or V) followed by "{major}.{minor}" or "{relative}|{major}.{minor}"', $format));
         }
 
         $this->prefix = $matches['prefix'] ?? '';
+        $this->relative = ($matches['relative'] ?? '') !== '';
         $this->position = \strlen($matches[0]);
 
         $this->preReleasePattern = null;
@@ -177,7 +205,7 @@ final class VersionFormatter
         $this->position += \strlen($matches[0]);
 
         if ($length > $this->position) {
-            throw new \InvalidArgumentException(\sprintf('Invalid format "%s" provided at position "%s". Expected nothing more at this position. Note that any custom suffix like is not accepted.', $format, substr($format, $this->position)));
+            throw new \InvalidArgumentException(\sprintf('Invalid format "%s" provided at position "%s". Expected nothing more at this position. Note that any custom suffix like "-dev" is not accepted.', $format, substr($format, $this->position)));
         }
     }
 
