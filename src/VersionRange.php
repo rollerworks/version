@@ -19,7 +19,7 @@ use Composer\Semver\VersionParser;
 /**
  * A version range consists of a lower and upper bound (either inclusive or exclusive).
  */
-final class VersionRange
+final class VersionRange implements \Stringable
 {
     private static VersionParser $versionParser;
     private readonly ?ConstraintInterface $constraint;

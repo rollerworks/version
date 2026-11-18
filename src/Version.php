@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace Rollerworks\Component\Version;
 
-final class Version
+final class Version implements \Stringable
 {
     /**
      * Match most common version formats.
@@ -95,11 +95,9 @@ final class Version
                 preRelease: true,
             );
         }
-
-        echo '';
     }
 
-    public function __toString()
+    public function __toString(): string
     {
         return $this->formatted;
     }
