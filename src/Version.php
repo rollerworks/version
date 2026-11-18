@@ -26,12 +26,22 @@ final class Version implements \Stringable, \JsonSerializable
      */
     public const string VERSION_REGEX = '(?P<major>\d++)\.(?P<minor>\d++)(?:\.(?P<patch>\d++))?(?:\.(?P<build>\d++))?([-.]?(?P<stability>beta|RC|alpha|stable)(?:[.-]?(?P<pre_release>\d+))?)?';
 
+    /**
+     * Match relative version formats.
+     *
+     * * Major version requires a fixed number.
+     * * Patch and build identifiers are optional.
+     * * Only `x`, `X` and `*` are allowed as placeholders.
+     */
+    public const string RELATIVE_VERSION_REGEX = '(?P<major>\d++)(?:\.(?P<minor>[xX*]|\d++))(?:\.(?P<patch>[xX*]|\d++))?(?:\.(?P<build>[xX*]|\d++))?';
+
     // fromString() options (bitmask)
     public const int INPUT_IGNORE_BUILD = 1;
     public const int INPUT_IGNORE_PATCH = (self::INPUT_IGNORE_BUILD | 2);
     public const int INPUT_IGNORE_PRE_RELEASE = 16;
     public const int INPUT_FILL_PATCH = 4;
     public const int INPUT_FILL_BUILD = (self::INPUT_FILL_PATCH | 8);
+    public const int INPUT_ALLOW_RELATIVE = 32;
 
     // getNextVersionCandidates() options (bitmask)
     public const int CANDIDATE_EXCLUDE_PATCH = 1;
@@ -67,6 +77,7 @@ final class Version implements \Stringable, \JsonSerializable
         int $preRelease = 0,
         public readonly ?int $build = null,
         ?string $outputFormat = null,
+        public readonly ?string $relative = null,
     ) {
         self::$formatter ??= new VersionFormatter();
 
@@ -78,12 +89,12 @@ final class Version implements \Stringable, \JsonSerializable
 
         $this->patchEmpty = $patch === null ? null : 0;
         $this->buildEmpty = $build === null ? null : 0;
-        $this->outputFormat = $outputFormat ?? VersionFormatter::FORMAT_DEFAULT;
+        $this->outputFormat = $outputFormat ?? ($relative ? VersionFormatter::FORMAT_DEFAULT_WITH_RELATIVE : VersionFormatter::FORMAT_DEFAULT);
         $this->formatted = self::$formatter->format($this, $this->outputFormat);
 
         // When an identifier is empty (patch or build) it will not be considered
-        // for as a candidate and so will ommited from the output when empty.
-        if ($patch !== null && $this->outputFormat === VersionFormatter::FORMAT_DEFAULT) {
+        // for a candidate and so will ommited from the output when empty.
+        if ($patch !== null && \in_array($this->outputFormat, [VersionFormatter::FORMAT_DEFAULT, VersionFormatter::FORMAT_DEFAULT_WITH_RELATIVE], true)) {
             // Default format already contains patch identifier, and build is only used when none-null.
             $this->outputFormatOfIncrement = $this->outputFormat;
         } else {
@@ -163,27 +174,45 @@ final class Version implements \Stringable, \JsonSerializable
      * Note: When the patch identifier is omitted the patch property is set to null.
      * Use the `$full` property to get a full version string.
      *
+     * Relative versions:
+     *
+     *   Relative versions are not allowed by default, add the {@see self::INPUT_ALLOW_RELATIVE}
+     *   option to allow relative versions (only `x`, `X` and `*` are allowed as placeholders).
+     *
+     *   A relative version cannot have a pre-release identifier or `-dev` suffix.
+     *   Only minor, patch and build identifiers can be relative, major must be a "fixed" number.
+     *
+     *   All placeholders are replaced with `9999999`, you can get the relative version
+     *   with the {@see Version::$relative} property, `null` if the version is not relative.
+     *
+     *   So: `1.x` becomes `1.9999999`, `1.5.*` becomes `1.5.9999999` (for the final version).
+     *
+     *   Note that the relative version are also processed using the same options
+     *   as the final version. Filling and ignoring of patch and/or build produces
+     *   a relative version with these identifiers filled or omitted accordingly.
+     *
+     *   1.x with patch filling produces `1.x.0`, while `1.5.x` with ignore
+     *   patch becomes `1.5`. Placeholders are kept as there original.
+     *
      * @param string|null $outputFormat See {@see format()} for details defaults to {@see VersionFormatter::FORMAT_DEFAULT}
      * @param int         $options      Bitmask options {@see Version::INPUT_*}
      */
     public static function fromString(string $version, ?string $outputFormat = null, int $options = 0): self
     {
-        // This is a special case that is never accepted anywhere.
-        if (str_ends_with(strtolower($version), 'stable-dev')) {
-            throw new \InvalidArgumentException(
-                \sprintf(
-                    'Unable to parse version "%s" Expects an SemVer compatible version. ' .
-                    'Either "1.0.0", "1.0", "1.0" or "1.0.0-beta1", "1.0.0-beta-1", "1.0.0.5", "1.0.0.0-dev"',
-                    $version
-                )
-            );
+        $relative = null;
+
+        self::validateInputOptions($options);
+
+        if (str_contains($version, '*') || stripos($version, 'x') !== false) {
+            $version = self::getFromRelative($version, $relative, $options);
         }
 
-        if (! preg_match('/^v?' . self::VERSION_REGEX . '(?:-dev)?$/i', $version, $matches)) {
+        if (! preg_match('/^v?' . self::VERSION_REGEX . '(?:-dev)?$/i', $version, $matches) || str_ends_with(strtolower($version), 'stable-dev')) {
             throw new \InvalidArgumentException(
                 \sprintf(
                     'Unable to parse version "%s" Expects an SemVer compatible version. ' .
-                    'Either "1.0.0", "1.0", "1.0" or "1.0.0-beta1", "1.0.0-beta-1", "1.0.0.5", "1.0.0.0-dev"',
+                    'Either "1.0.0", "1.0", "1.0" or "1.0.0-beta1", "1.0.0-beta-1", "1.0.0.5", "1.0.0.0-dev"' .
+                    (self::bitmaskHas($options, self::INPUT_ALLOW_RELATIVE) ? ', or relative (for minor, patch and/or build) like "1.x", "1.x.x", "10.*", "1.x.x.x".' : '.'),
                     $version
                 )
             );
@@ -207,7 +236,8 @@ final class Version implements \Stringable, \JsonSerializable
             stability: Stability::fromString($matches['stability']),
             preRelease: $matches['pre_release'],
             build: $matches['build'],
-            outputFormat: $outputFormat
+            outputFormat: $outputFormat,
+            relative: $relative,
         );
     }
 
@@ -357,6 +387,9 @@ final class Version implements \Stringable, \JsonSerializable
      * - `{major}.{minor}.{patch}.{build}-{pre-release:lower}x`
      * - `{major}.{minor}.{?patch}` (patch is only displayed when provided)
      * - `{major}.{minor}` (minimal accepted version)
+     *
+     * Use `{relative}|{major}.{minor}` to display a relative version (when one was provided).
+     * Specific formatting of a relative version (omitting/filling) is not supported.
      *
      * Tip: If you need only one identifier use the object property instead.
      *
@@ -526,10 +559,7 @@ final class Version implements \Stringable, \JsonSerializable
         };
     }
 
-    /**
-     * @param array<string|int, mixed> $matches
-     */
-    private static function processInputOptions(int $options, array &$matches): void
+    private static function validateInputOptions(int $options): void
     {
         if ($options === 0) {
             return;
@@ -545,6 +575,16 @@ final class Version implements \Stringable, \JsonSerializable
 
         if (self::bitmaskHas($options, self::INPUT_IGNORE_BUILD) && self::bitmaskHas($options, self::INPUT_FILL_BUILD)) {
             throw new \InvalidArgumentException('Cannot combine options "INPUT_IGNORE_BUILD" and "INPUT_FILL_BUILD".');
+        }
+    }
+
+    /**
+     * @param array<string|int, mixed> $matches
+     */
+    private static function processInputOptions(int $options, array &$matches): void
+    {
+        if ($options === 0) {
+            return;
         }
 
         if (self::bitmaskHas($options, self::INPUT_IGNORE_PATCH)) {
@@ -563,6 +603,35 @@ final class Version implements \Stringable, \JsonSerializable
             $matches['stability'] = 'stable';
             $matches['pre_release'] = 0;
         }
+    }
+
+    /**
+     * @param-out string $relative
+     */
+    private static function getFromRelative(string $version, ?string &$relative, int $options): string
+    {
+        if (! self::bitmaskHas($options, self::INPUT_ALLOW_RELATIVE)) {
+            throw new \InvalidArgumentException(\sprintf('Unable to parse version "%s" Expects an SemVer compatible version. Relative versions are not allowed, try adding the "INPUT_ALLOW_RELATIVE" option.', $version));
+        }
+
+        if (! preg_match(\sprintf('{^[vV]?%s$}', self::RELATIVE_VERSION_REGEX), $version, $matches)) {
+            throw new \InvalidArgumentException(\sprintf('Unable to parse version "%s", unexpected relative format. Expected a SemVer compatible relative version, major must be "fixed" like "1.x" or "1.*".', $version));
+        }
+
+        $relative = $version = $matches['major'];
+
+        self::processInputOptions($options, $matches);
+
+        foreach (['minor', 'patch', 'build'] as $identifier) {
+            if (! isset($matches[$identifier])) {
+                continue;
+            }
+
+            $version .= '.' . str_ireplace(['*', 'X'], '9999999', (string) $matches[$identifier]);
+            $relative .= '.' . $matches[$identifier];
+        }
+
+        return $version;
     }
 
     /**

@@ -44,6 +44,7 @@ class VersionTest extends TestCase
         self::assertEquals(5, $version->preRelease);
         self::assertEquals('1.0.0.0-BETA5', $version->full);
         self::assertEquals('1.0.0-BETA5', $version->fullWithoutBuild);
+        self::assertNull($version->relative);
 
         self::assertEquals([
             'formatted' => $version->formatted,
@@ -260,6 +261,212 @@ class VersionTest extends TestCase
     }
 
     #[Test]
+    public function it_creates_from_relative(): void
+    {
+        $version = Version::fromString('1.x', options: Version::INPUT_ALLOW_RELATIVE);
+        self::assertEquals(1, $version->major);
+        self::assertEquals(9999999, $version->minor);
+        self::assertNull($version->patch);
+        self::assertNull($version->build);
+        self::assertEquals(Stability::Stable, $version->stability);
+        self::assertEquals(0, $version->preRelease);
+        self::assertEquals('1.x', $version->relative);
+        self::assertEquals('1.9999999.0.0', $version->full);
+        self::assertEquals('1.9999999.0', $version->fullWithoutBuild);
+        self::assertEquals('1.x', $version->formatted);
+        self::assertEquals([
+            'version' => $version->formatted,
+            'format' => $version->outputFormat,
+        ], $version->jsonSerialize());
+        self::assertEquals([
+            'formatted' => $version->formatted,
+            'full' => $version->full,
+            'version' => [
+                'major' => 1,
+                'minor' => 9999999,
+                'patch' => null,
+                'build' => null,
+                'stability' => Stability::Stable,
+                'pre_release' => 0,
+            ],
+            'output_format' => $version->outputFormat,
+            'format_of_increment' => $version->outputFormatOfIncrement,
+        ], $version->__debugInfo());
+
+        $version = Version::fromString('1.x.*', options: Version::INPUT_ALLOW_RELATIVE);
+        self::assertEquals(1, $version->major);
+        self::assertEquals(9999999, $version->minor);
+        self::assertEquals(9999999, $version->patch);
+        self::assertNull($version->build);
+        self::assertEquals(Stability::Stable, $version->stability);
+        self::assertEquals(0, $version->preRelease);
+        self::assertEquals('1.x.*', $version->relative);
+        self::assertEquals('1.9999999.9999999.0', $version->full);
+        self::assertEquals('1.9999999.9999999', $version->fullWithoutBuild);
+        self::assertEquals('1.x.*', $version->formatted);
+        self::assertEquals([
+            'version' => $version->formatted,
+            'format' => $version->outputFormat,
+        ], $version->jsonSerialize());
+        self::assertEquals([
+            'formatted' => $version->formatted,
+            'full' => $version->full,
+            'version' => [
+                'major' => 1,
+                'minor' => 9999999,
+                'patch' => 9999999,
+                'build' => null,
+                'stability' => Stability::Stable,
+                'pre_release' => 0,
+            ],
+            'output_format' => $version->outputFormat,
+            'format_of_increment' => $version->outputFormatOfIncrement,
+        ], $version->__debugInfo());
+
+        $version = Version::fromString('v1.5.8.*', options: Version::INPUT_ALLOW_RELATIVE);
+        self::assertEquals(1, $version->major);
+        self::assertEquals(5, $version->minor);
+        self::assertEquals(8, $version->patch);
+        self::assertEquals(9999999, $version->build);
+        self::assertEquals(Stability::Stable, $version->stability);
+        self::assertEquals(0, $version->preRelease);
+        self::assertEquals('1.5.8.*', $version->relative);
+        self::assertEquals('1.5.8.9999999', $version->full);
+        self::assertEquals('1.5.8', $version->fullWithoutBuild);
+        self::assertEquals('1.5.8.*', $version->formatted);
+        self::assertEquals([
+            'version' => $version->formatted,
+            'format' => $version->outputFormat,
+        ], $version->jsonSerialize());
+        self::assertEquals([
+            'formatted' => $version->formatted,
+            'full' => $version->full,
+            'version' => [
+                'major' => 1,
+                'minor' => 5,
+                'patch' => 8,
+                'build' => 9999999,
+                'stability' => Stability::Stable,
+                'pre_release' => 0,
+            ],
+            'output_format' => $version->outputFormat,
+            'format_of_increment' => $version->outputFormatOfIncrement,
+        ], $version->__debugInfo());
+
+        $version = Version::fromString('v1.5.8.*', outputFormat: 'v{relative}|{major}.{minor}.{?patch}.{?build}-{pre-release:upper}x', options: Version::INPUT_ALLOW_RELATIVE);
+        self::assertEquals(1, $version->major);
+        self::assertEquals(5, $version->minor);
+        self::assertEquals(8, $version->patch);
+        self::assertEquals(9999999, $version->build);
+        self::assertEquals(Stability::Stable, $version->stability);
+        self::assertEquals(0, $version->preRelease);
+        self::assertEquals('1.5.8.*', $version->relative);
+        self::assertEquals('1.5.8.9999999', $version->full);
+        self::assertEquals('1.5.8', $version->fullWithoutBuild);
+        self::assertEquals('v1.5.8.*', $version->formatted);
+        self::assertEquals([
+            'version' => $version->formatted,
+            'format' => $version->outputFormat,
+        ], $version->jsonSerialize());
+        self::assertEquals([
+            'formatted' => $version->formatted,
+            'full' => $version->full,
+            'version' => [
+                'major' => 1,
+                'minor' => 5,
+                'patch' => 8,
+                'build' => 9999999,
+                'stability' => Stability::Stable,
+                'pre_release' => 0,
+            ],
+            'output_format' => $version->outputFormat,
+            'format_of_increment' => $version->outputFormatOfIncrement,
+        ], $version->__debugInfo());
+    }
+
+    #[Test]
+    public function it_creates_from_relative_with_options(): void
+    {
+        $version = Version::fromString('1.x', options: Version::INPUT_ALLOW_RELATIVE | Version::INPUT_FILL_PATCH);
+        self::assertEquals(1, $version->major);
+        self::assertEquals(9999999, $version->minor);
+        self::assertEquals(0, $version->patch);
+        self::assertNull($version->build);
+        self::assertEquals(Stability::Stable, $version->stability);
+        self::assertEquals(0, $version->preRelease);
+        self::assertEquals('1.x.0', $version->relative);
+        self::assertEquals('1.9999999.0.0', $version->full);
+        self::assertEquals('1.9999999.0', $version->fullWithoutBuild);
+        self::assertEquals('1.x.0', $version->formatted);
+        self::assertEquals([
+            'formatted' => $version->formatted,
+            'full' => $version->full,
+            'version' => [
+                'major' => 1,
+                'minor' => 9999999,
+                'patch' => 0,
+                'build' => null,
+                'stability' => Stability::Stable,
+                'pre_release' => 0,
+            ],
+            'output_format' => $version->outputFormat,
+            'format_of_increment' => $version->outputFormatOfIncrement,
+        ], $version->__debugInfo());
+
+        $version = Version::fromString('1.x.*', options: Version::INPUT_ALLOW_RELATIVE | Version::INPUT_FILL_BUILD);
+        self::assertEquals(1, $version->major);
+        self::assertEquals(9999999, $version->minor);
+        self::assertEquals(9999999, $version->patch);
+        self::assertEquals(0, $version->build);
+        self::assertEquals(Stability::Stable, $version->stability);
+        self::assertEquals(0, $version->preRelease);
+        self::assertEquals('1.x.*.0', $version->relative);
+        self::assertEquals('1.9999999.9999999.0', $version->full);
+        self::assertEquals('1.9999999.9999999', $version->fullWithoutBuild);
+        self::assertEquals('1.x.*.0', $version->formatted);
+        self::assertEquals([
+            'formatted' => $version->formatted,
+            'full' => $version->full,
+            'version' => [
+                'major' => 1,
+                'minor' => 9999999,
+                'patch' => 9999999,
+                'build' => 0,
+                'stability' => Stability::Stable,
+                'pre_release' => 0,
+            ],
+            'output_format' => $version->outputFormat,
+            'format_of_increment' => $version->outputFormatOfIncrement,
+        ], $version->__debugInfo());
+
+        $version = Version::fromString('v1.5.8.*', options: Version::INPUT_ALLOW_RELATIVE | Version::INPUT_IGNORE_PATCH);
+        self::assertEquals(1, $version->major);
+        self::assertEquals(5, $version->minor);
+        self::assertNull($version->patch);
+        self::assertNull($version->build);
+        self::assertEquals(Stability::Stable, $version->stability);
+        self::assertEquals(0, $version->preRelease);
+        self::assertEquals('1.5', $version->relative);
+        self::assertEquals('1.5.0.0', $version->full);
+        self::assertEquals('1.5.0', $version->fullWithoutBuild);
+        self::assertEquals('1.5', $version->formatted);
+        self::assertEquals([
+            'formatted' => $version->formatted,
+            'full' => $version->full,
+            'version' => [
+                'major' => 1,
+                'minor' => 5,
+                'patch' => null,
+                'build' => null,
+                'stability' => Stability::Stable,
+                'pre_release' => 0,
+            ],
+            'output_format' => $version->outputFormat,
+            'format_of_increment' => $version->outputFormatOfIncrement,
+        ], $version->__debugInfo());
+    }
+
+    #[Test]
     public function it_creates_a_new_version(): void
     {
         $version = Version::create();
@@ -272,6 +479,7 @@ class VersionTest extends TestCase
         self::assertSame('0.0.0.0', $version->full);
         self::assertSame('0.0.0', $version->fullWithoutBuild);
         self::assertSame(VersionFormatter::FORMAT_DEFAULT, $version->outputFormat);
+        self::assertNull($version->relative);
 
         $version = Version::create(stability: Stability::Alpha);
         self::assertSame(0, $version->major);
@@ -659,6 +867,33 @@ class VersionTest extends TestCase
         $this->expectExceptionMessageContains('Unable to parse version "1.0.0-WAT"');
 
         Version::fromString('1.0.0-WAT');
+    }
+
+    #[Test]
+    public function it_fails_for_invalid_relative_version(): void
+    {
+        $this->expectException('InvalidArgumentException');
+        $this->expectExceptionMessageContains('Unable to parse version "x.0.0", unexpected relative format. Expected a SemVer compatible relative version, major must be "fixed" like "1.x" or "1.*".');
+
+        Version::fromString('x.0.0', options: Version::INPUT_ALLOW_RELATIVE);
+    }
+
+    #[Test]
+    public function it_fails_for_invalid_relative_version_with_pre_release(): void
+    {
+        $this->expectException('InvalidArgumentException');
+        $this->expectExceptionMessageContains('Unable to parse version "5.0.x-beta1", unexpected relative format. Expected a SemVer compatible relative version, major must be "fixed" like "1.x" or "1.*".');
+
+        Version::fromString('5.0.x-beta1', options: Version::INPUT_ALLOW_RELATIVE);
+    }
+
+    #[Test]
+    public function it_fails_for_relative_version_without_relative_allowed(): void
+    {
+        $this->expectException('InvalidArgumentException');
+        $this->expectExceptionMessageContains('Unable to parse version "5.x" Expects an SemVer compatible version. Relative versions are not allowed, try adding the "INPUT_ALLOW_RELATIVE" option.');
+
+        Version::fromString('5.x');
     }
 
     #[Test]
