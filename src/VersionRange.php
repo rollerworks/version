@@ -19,7 +19,7 @@ use Composer\Semver\VersionParser;
 /**
  * A version range consists of a lower and upper bound (either inclusive or exclusive).
  */
-final class VersionRange implements \Stringable
+final class VersionRange implements \Stringable, \JsonSerializable
 {
     private static VersionParser $versionParser;
     private readonly ?ConstraintInterface $constraint;
@@ -49,6 +49,35 @@ final class VersionRange implements \Stringable
         self::$versionParser ??= new VersionParser();
 
         return self::createFromConstraint(self::$versionParser->parseConstraints($constraints));
+    }
+
+    /**
+     * Create a VersionRange object from an array.
+     *
+     * @param array{
+     *     lower?: array{version: string, format: string}|null,
+     *     upper?: array{version: string, format: string}|null,
+     *     lowerInclusive?: bool,
+     *     upperInclusive?: bool
+     * } $data
+     */
+    public static function fromArray(array $data): self
+    {
+        $data['lower'] ??= null;
+        $data['upper'] ??= null;
+        $data['lowerInclusive'] ??= null;
+        $data['upperInclusive'] ??= null;
+
+        $intersectedKeys = array_diff_key($data, ['lower' => true, 'upper' => true, 'lowerInclusive' => true, 'upperInclusive' => true]);
+
+        if (\count($intersectedKeys) > 0) {
+            throw new \InvalidArgumentException(\sprintf('Invalid version range data, unexpected keys found: "%s".', implode('", "', array_keys($intersectedKeys))));
+        }
+
+        $lower = isset($data['lower']) ? Version::fromArray($data['lower']) : null;
+        $upper = isset($data['upper']) ? Version::fromArray($data['upper']) : null;
+
+        return new self($lower, $upper, $data['lowerInclusive'] ?? false, $data['upperInclusive'] ?? false);
     }
 
     /**
@@ -143,6 +172,32 @@ final class VersionRange implements \Stringable
         }
 
         return implode(' ', $str);
+    }
+
+    /**
+     * This method should only be used with JSON serialization.
+     *
+     * Reconstruct with {@see VersionRange::fromArray()}.
+     *
+     * @return array{
+     *     lower: Version|null,
+     *     upper: Version|null,
+     *     lowerInclusive: bool,
+     *     upperInclusive: bool
+     * }|null
+     */
+    public function jsonSerialize(): ?array
+    {
+        if (! $this->lowerBound && ! $this->upperBound) {
+            return null;
+        }
+
+        return [
+            'lower' => $this->lowerBound,
+            'upper' => $this->upperBound,
+            'lowerInclusive' => $this->lowerInclusive,
+            'upperInclusive' => $this->upperInclusive,
+        ];
     }
 
     /**
