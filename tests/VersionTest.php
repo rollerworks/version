@@ -59,6 +59,11 @@ class VersionTest extends TestCase
             'output_format' => $version->outputFormat,
             'format_of_increment' => '{major}.{minor}.{?patch}.{?build}-{pre-release:upper}x',
         ], $version->__debugInfo());
+
+        self::assertJsonStringEqualsJsonString(json_encode([
+            'version' => $version->formatted,
+            'format' => $version->outputFormat,
+        ], \JSON_THROW_ON_ERROR), json_encode($version->jsonSerialize(), \JSON_THROW_ON_ERROR));
     }
 
     #[Test]
@@ -362,6 +367,10 @@ class VersionTest extends TestCase
         self::assertSame('1.0.5-Alpha.1', $version->formatted);
         self::assertSame('{major}.{minor}.{?patch}-{pre-release:title}.x', $version->outputFormat);
         self::assertSame('{major}.{minor}.{?patch}.{?build}-{pre-release:title}.x', $version->outputFormatOfIncrement);
+        self::assertJsonStringEqualsJsonString(json_encode([
+            'version' => $version->formatted,
+            'format' => $version->outputFormat,
+        ], \JSON_THROW_ON_ERROR), json_encode($version->jsonSerialize(), \JSON_THROW_ON_ERROR));
     }
 
     #[Test]

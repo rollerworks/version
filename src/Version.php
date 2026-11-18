@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace Rollerworks\Component\Version;
 
-final class Version implements \Stringable
+final class Version implements \Stringable, \JsonSerializable
 {
     /**
      * Match most common version formats.
@@ -100,6 +100,17 @@ final class Version implements \Stringable
     public function __toString(): string
     {
         return $this->formatted;
+    }
+
+    /**
+     * @return array{version: string, format: string}
+     */
+    public function jsonSerialize(): array
+    {
+        return [
+            'version' => $this->formatted,
+            'format' => $this->outputFormat,
+        ];
     }
 
     /**
@@ -198,6 +209,22 @@ final class Version implements \Stringable
             build: $matches['build'],
             outputFormat: $outputFormat
         );
+    }
+
+    /**
+     * Create a Version object from an array.
+     *
+     * @param array{version: string, format: string} $data
+     *
+     * @throws \InvalidArgumentException
+     */
+    public static function fromArray(array $data): self
+    {
+        if (! isset($data['version'], $data['format'])) {
+            throw new \InvalidArgumentException(\sprintf('Unable to reconstruct version, missing either "version" and/or "format" in "%s".', json_encode($data)));
+        }
+
+        return self::fromString($data['version'], $data['format']);
     }
 
     /**
