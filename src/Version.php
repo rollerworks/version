@@ -119,7 +119,7 @@ final class Version implements \Stringable, \JsonSerializable
     public function jsonSerialize(): array
     {
         return [
-            'version' => $this->formatted,
+            'version' => $this->format(VersionFormatter::FORMAT_DEFAULT_WITH_RELATIVE),
             'format' => $this->outputFormat,
         ];
     }
@@ -251,10 +251,16 @@ final class Version implements \Stringable, \JsonSerializable
     public static function fromArray(array $data): self
     {
         if (! isset($data['version'], $data['format'])) {
-            throw new \InvalidArgumentException(\sprintf('Unable to reconstruct version, missing either "version" and/or "format" in "%s".', json_encode($data)));
+            throw new \InvalidArgumentException(\sprintf('Unable to reconstruct version, missing either "version" and/or "format" in "%s".', implode('", "', array_keys($data))));
         }
 
-        return self::fromString($data['version'], $data['format']);
+        $intersectedKeys = array_diff_key($data, ['version' => true, 'format' => true]);
+
+        if (\count($intersectedKeys) > 0) {
+            throw new \InvalidArgumentException(\sprintf('Invalid version data, unexpected keys provided: "%s".', implode('", "', array_keys($intersectedKeys))));
+        }
+
+        return self::fromString($data['version'], $data['format'], self::INPUT_ALLOW_RELATIVE);
     }
 
     /**
@@ -606,7 +612,7 @@ final class Version implements \Stringable, \JsonSerializable
     }
 
     /**
-     * @param-out string $relative
+     * @param-out string|null $relative
      */
     private static function getFromRelative(string $version, ?string &$relative, int $options): string
     {
@@ -629,6 +635,10 @@ final class Version implements \Stringable, \JsonSerializable
 
             $version .= '.' . str_ireplace(['*', 'X'], '9999999', (string) $matches[$identifier]);
             $relative .= '.' . $matches[$identifier];
+        }
+
+        if (! str_contains($relative, '*') && stripos($relative, 'x') === false) {
+            $relative = null;
         }
 
         return $version;

@@ -71,7 +71,7 @@ final class VersionRange implements \Stringable, \JsonSerializable
         $intersectedKeys = array_diff_key($data, ['lower' => true, 'upper' => true, 'lowerInclusive' => true, 'upperInclusive' => true]);
 
         if (\count($intersectedKeys) > 0) {
-            throw new \InvalidArgumentException(\sprintf('Invalid version range data, unexpected keys found: "%s".', implode('", "', array_keys($intersectedKeys))));
+            throw new \InvalidArgumentException(\sprintf('Invalid version range data, unexpected keys provided: "%s".', implode('", "', array_keys($intersectedKeys))));
         }
 
         $lower = isset($data['lower']) ? Version::fromArray($data['lower']) : null;
