@@ -45,7 +45,6 @@ class VersionTest extends TestCase
         self::assertEquals('1.0.0.0-BETA5', $version->full);
         self::assertEquals('1.0.0-BETA5', $version->fullWithoutBuild);
         self::assertNull($version->relative);
-
         self::assertEquals([
             'formatted' => $version->formatted,
             'full' => $version->full,
@@ -61,10 +60,7 @@ class VersionTest extends TestCase
             'format_of_increment' => '{major}.{minor}.{?patch}.{?build}-{pre-release:upper}x',
         ], $version->__debugInfo());
 
-        self::assertJsonStringEqualsJsonString(json_encode([
-            'version' => $version->formatted,
-            'format' => $version->outputFormat,
-        ], \JSON_THROW_ON_ERROR), json_encode($version->jsonSerialize(), \JSON_THROW_ON_ERROR));
+        self::assertVersionIsJsonReconstructable($version);
     }
 
     #[Test]
@@ -110,7 +106,6 @@ class VersionTest extends TestCase
         self::assertEquals(0, $version->preRelease);
         self::assertEquals('1.0.0.5', $version->full);
         self::assertEquals('1.0.0', $version->fullWithoutBuild);
-
         self::assertEquals([
             'formatted' => $version->formatted,
             'full' => $version->full,
@@ -125,6 +120,7 @@ class VersionTest extends TestCase
             'output_format' => $version->outputFormat,
             'format_of_increment' => '{major}.{minor}.{?patch}.{?build}-{pre-release:upper}x',
         ], $version->__debugInfo());
+        self::assertVersionIsJsonReconstructable($version);
     }
 
     #[Test]
@@ -140,7 +136,6 @@ class VersionTest extends TestCase
         self::assertEquals(0, $version->preRelease);
         self::assertEquals('1.0.0.0', $version->full);
         self::assertEquals('1.0.0', $version->fullWithoutBuild);
-
         self::assertEquals([
             'formatted' => $version->formatted,
             'full' => $version->full,
@@ -155,12 +150,14 @@ class VersionTest extends TestCase
             'output_format' => $version->outputFormat,
             'format_of_increment' => '{major}.{minor}.{?patch}.{?build}-{pre-release:upper}x',
         ], $version->__debugInfo());
+        self::assertVersionIsJsonReconstructable($version);
     }
 
     #[Test]
     public function it_creates_from_string_with_ignored_build(): void
     {
         $version = Version::fromString('1.0.1.5', options: Version::INPUT_IGNORE_BUILD);
+
         self::assertEquals(1, $version->major);
         self::assertEquals(0, $version->minor);
         self::assertEquals(1, $version->patch);
@@ -169,7 +166,6 @@ class VersionTest extends TestCase
         self::assertEquals(0, $version->preRelease);
         self::assertEquals('1.0.1.0', $version->full);
         self::assertEquals('1.0.1', $version->fullWithoutBuild);
-
         self::assertEquals([
             'formatted' => $version->formatted,
             'full' => $version->full,
@@ -184,6 +180,7 @@ class VersionTest extends TestCase
             'output_format' => $version->outputFormat,
             'format_of_increment' => '{major}.{minor}.{?patch}.{?build}-{pre-release:upper}x',
         ], $version->__debugInfo());
+        self::assertVersionIsJsonReconstructable($version);
     }
 
     #[Test]
@@ -205,7 +202,6 @@ class VersionTest extends TestCase
     public function it_creates_from_string_with_filled_patch(): void
     {
         $version = Version::fromString('1.0', options: Version::INPUT_FILL_PATCH);
-
         self::assertEquals(1, $version->major);
         self::assertEquals(0, $version->minor);
         self::assertEquals(0, $version->patch);
@@ -274,10 +270,7 @@ class VersionTest extends TestCase
         self::assertEquals('1.9999999.0.0', $version->full);
         self::assertEquals('1.9999999.0', $version->fullWithoutBuild);
         self::assertEquals('1.x', $version->formatted);
-        self::assertEquals([
-            'version' => $version->formatted,
-            'format' => $version->outputFormat,
-        ], $version->jsonSerialize());
+        self::assertVersionIsJsonReconstructable($version);
         self::assertEquals([
             'formatted' => $version->formatted,
             'full' => $version->full,
@@ -304,10 +297,7 @@ class VersionTest extends TestCase
         self::assertEquals('1.9999999.9999999.0', $version->full);
         self::assertEquals('1.9999999.9999999', $version->fullWithoutBuild);
         self::assertEquals('1.x.*', $version->formatted);
-        self::assertEquals([
-            'version' => $version->formatted,
-            'format' => $version->outputFormat,
-        ], $version->jsonSerialize());
+        self::assertVersionIsJsonReconstructable($version);
         self::assertEquals([
             'formatted' => $version->formatted,
             'full' => $version->full,
@@ -334,10 +324,7 @@ class VersionTest extends TestCase
         self::assertEquals('1.5.8.9999999', $version->full);
         self::assertEquals('1.5.8', $version->fullWithoutBuild);
         self::assertEquals('1.5.8.*', $version->formatted);
-        self::assertEquals([
-            'version' => $version->formatted,
-            'format' => $version->outputFormat,
-        ], $version->jsonSerialize());
+        self::assertVersionIsJsonReconstructable($version);
         self::assertEquals([
             'formatted' => $version->formatted,
             'full' => $version->full,
@@ -364,10 +351,7 @@ class VersionTest extends TestCase
         self::assertEquals('1.5.8.9999999', $version->full);
         self::assertEquals('1.5.8', $version->fullWithoutBuild);
         self::assertEquals('v1.5.8.*', $version->formatted);
-        self::assertEquals([
-            'version' => $version->formatted,
-            'format' => $version->outputFormat,
-        ], $version->jsonSerialize());
+        self::assertVersionIsJsonReconstructable($version);
         self::assertEquals([
             'formatted' => $version->formatted,
             'full' => $version->full,
@@ -398,6 +382,7 @@ class VersionTest extends TestCase
         self::assertEquals('1.9999999.0.0', $version->full);
         self::assertEquals('1.9999999.0', $version->fullWithoutBuild);
         self::assertEquals('1.x.0', $version->formatted);
+        self::assertVersionIsJsonReconstructable($version);
         self::assertEquals([
             'formatted' => $version->formatted,
             'full' => $version->full,
@@ -424,6 +409,7 @@ class VersionTest extends TestCase
         self::assertEquals('1.9999999.9999999.0', $version->full);
         self::assertEquals('1.9999999.9999999', $version->fullWithoutBuild);
         self::assertEquals('1.x.*.0', $version->formatted);
+        self::assertVersionIsJsonReconstructable($version);
         self::assertEquals([
             'formatted' => $version->formatted,
             'full' => $version->full,
@@ -444,12 +430,13 @@ class VersionTest extends TestCase
         self::assertEquals(5, $version->minor);
         self::assertNull($version->patch);
         self::assertNull($version->build);
+        self::assertNull($version->relative);
         self::assertEquals(Stability::Stable, $version->stability);
         self::assertEquals(0, $version->preRelease);
-        self::assertEquals('1.5', $version->relative);
         self::assertEquals('1.5.0.0', $version->full);
         self::assertEquals('1.5.0', $version->fullWithoutBuild);
         self::assertEquals('1.5', $version->formatted);
+        self::assertVersionIsJsonReconstructable($version);
         self::assertEquals([
             'formatted' => $version->formatted,
             'full' => $version->full,
@@ -480,6 +467,7 @@ class VersionTest extends TestCase
         self::assertSame('0.0.0', $version->fullWithoutBuild);
         self::assertSame(VersionFormatter::FORMAT_DEFAULT, $version->outputFormat);
         self::assertNull($version->relative);
+        self::assertVersionIsJsonReconstructable($version);
 
         $version = Version::create(stability: Stability::Alpha);
         self::assertSame(0, $version->major);
@@ -491,6 +479,7 @@ class VersionTest extends TestCase
         self::assertSame('0.0.0.0', $version->full);
         self::assertSame('0.0.0', $version->fullWithoutBuild);
         self::assertSame(VersionFormatter::FORMAT_DEFAULT, $version->outputFormat);
+        self::assertVersionIsJsonReconstructable($version);
 
         $version = Version::create(0, 5);
         self::assertSame(0, $version->major);
@@ -502,6 +491,7 @@ class VersionTest extends TestCase
         self::assertSame('0.5.0.0', $version->full);
         self::assertSame('0.5.0', $version->fullWithoutBuild);
         self::assertSame(VersionFormatter::FORMAT_DEFAULT, $version->outputFormat);
+        self::assertVersionIsJsonReconstructable($version);
 
         $version = Version::create(5);
         self::assertSame(5, $version->major);
@@ -512,6 +502,7 @@ class VersionTest extends TestCase
         self::assertSame(0, $version->preRelease);
         self::assertSame('5.0.0.0', $version->full);
         self::assertSame('5.0.0', $version->fullWithoutBuild);
+        self::assertVersionIsJsonReconstructable($version);
 
         $version = Version::create(5, 3);
         self::assertSame(5, $version->major);
@@ -522,6 +513,7 @@ class VersionTest extends TestCase
         self::assertSame(0, $version->preRelease);
         self::assertSame('5.3.0.0', $version->full);
         self::assertSame('5.3.0', $version->fullWithoutBuild);
+        self::assertVersionIsJsonReconstructable($version);
 
         $version = Version::create(1, 0, 5);
         self::assertSame(1, $version->major);
@@ -532,6 +524,7 @@ class VersionTest extends TestCase
         self::assertSame(0, $version->preRelease);
         self::assertSame('1.0.5.0', $version->full);
         self::assertSame('1.0.5', $version->fullWithoutBuild);
+        self::assertVersionIsJsonReconstructable($version);
 
         $version = Version::create(1, 0, 5, build: 8);
         self::assertSame(1, $version->major);
@@ -542,6 +535,7 @@ class VersionTest extends TestCase
         self::assertSame(0, $version->preRelease);
         self::assertSame('1.0.5.8', $version->full);
         self::assertSame('1.0.5', $version->fullWithoutBuild);
+        self::assertVersionIsJsonReconstructable($version);
 
         $version = Version::create(1, 0, build: 8);
         self::assertSame(1, $version->major);
@@ -552,6 +546,7 @@ class VersionTest extends TestCase
         self::assertSame(0, $version->preRelease);
         self::assertSame('1.0.0.8', $version->full);
         self::assertSame('1.0.0', $version->fullWithoutBuild);
+        self::assertVersionIsJsonReconstructable($version);
 
         $version = Version::create(1, 0, 5, build: 8, stability: Stability::Alpha, preRelease: 1);
         self::assertSame(1, $version->major);
@@ -562,6 +557,7 @@ class VersionTest extends TestCase
         self::assertSame(1, $version->preRelease);
         self::assertSame('1.0.5.8-ALPHA1', $version->full);
         self::assertSame('1.0.5-ALPHA1', $version->fullWithoutBuild);
+        self::assertVersionIsJsonReconstructable($version);
 
         $version = Version::create(1, 0, 5, build: 8, stability: Stability::Alpha, preRelease: 1, outputFormat: '{major}.{minor}.{?patch}-{pre-release:title}.x');
         self::assertSame(1, $version->major);
@@ -575,10 +571,7 @@ class VersionTest extends TestCase
         self::assertSame('1.0.5-Alpha.1', $version->formatted);
         self::assertSame('{major}.{minor}.{?patch}-{pre-release:title}.x', $version->outputFormat);
         self::assertSame('{major}.{minor}.{?patch}.{?build}-{pre-release:title}.x', $version->outputFormatOfIncrement);
-        self::assertJsonStringEqualsJsonString(json_encode([
-            'version' => $version->formatted,
-            'format' => $version->outputFormat,
-        ], \JSON_THROW_ON_ERROR), json_encode($version->jsonSerialize(), \JSON_THROW_ON_ERROR));
+        self::assertVersionIsJsonReconstructable($version);
     }
 
     #[Test]
@@ -858,6 +851,7 @@ class VersionTest extends TestCase
     public function formats_with_custom_format(Version $version, ?string $format, string $expected): void
     {
         self::assertEquals($expected, $version->format($format));
+        self::assertVersionIsJsonReconstructable($version);
     }
 
     #[Test]
@@ -903,6 +897,15 @@ class VersionTest extends TestCase
         $this->expectExceptionMessageContains('Unable to parse version "1.0.0-stable-5" Expects an SemVer compatible version. Pre-release "stable" cannot have a number.');
 
         Version::fromString('1.0.0-stable-5');
+    }
+
+    #[Test]
+    public function it_fails_from_array_with_unexpected_keys(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessageContains('Invalid version data, unexpected keys provided: "constraint", "relative".');
+
+        Version::fromArray(['version' => '1.0', 'format' => '{major}', 'constraint' => true, 'relative' => false]);
     }
 
     /**
@@ -1084,5 +1087,10 @@ class VersionTest extends TestCase
         } else {
             $this->expectExceptionMessage($message);
         }
+    }
+
+    private static function assertVersionIsJsonReconstructable(Version $version): void
+    {
+        self::assertEquals($version, Version::fromArray(json_decode(json_encode($version, \JSON_THROW_ON_ERROR), true)));
     }
 }

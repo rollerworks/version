@@ -50,30 +50,21 @@ final class VersionRangeTest extends TestCase
         self::assertSame($l, $range->lowerBound);
         self::assertSame($u, $range->upperBound);
         self::assertSame('1.0.0 - 2.0', $range->toNormalizedStr());
-        self::assertJsonStringEqualsJsonString(
-            json_encode(['lower' => $l, 'upper' => $u, 'lowerInclusive' => true, 'upperInclusive' => true], \JSON_THROW_ON_ERROR),
-            json_encode($range, \JSON_THROW_ON_ERROR),
-        );
+        self::assertIsJsonReconstructable($range);
 
         $range = new VersionRange($l = Version::fromString('1.0', options: Version::INPUT_FILL_PATCH), $u = Version::fromString('2.0'), false, false);
         self::assertSame('>1.0.0 <2.0', (string) $range);
         self::assertSame($l, $range->lowerBound);
         self::assertSame($u, $range->upperBound);
         self::assertSame('>1.0.0 - <2.0', $range->toNormalizedStr());
-        self::assertJsonStringEqualsJsonString(
-            json_encode(['lower' => $l, 'upper' => $u, 'lowerInclusive' => false, 'upperInclusive' => false], \JSON_THROW_ON_ERROR),
-            json_encode($range, \JSON_THROW_ON_ERROR),
-        );
+        self::assertIsJsonReconstructable($range);
 
         $range = new VersionRange($l = Version::fromString('1.0', outputFormat: 'v{major}.{minor}.{patch}'), $u = Version::fromString('2.0.5', outputFormat: 'v{major}.{minor}'), true, true);
         self::assertSame('>=v1.0.0 <=v2.0', (string) $range);
         self::assertSame($l, $range->lowerBound);
         self::assertSame($u, $range->upperBound);
         self::assertSame('1.0.0 - 2.0.5', $range->toNormalizedStr('{major}.{minor}.{patch}'));
-        self::assertJsonStringEqualsJsonString(
-            json_encode(['lower' => $l, 'upper' => $u, 'lowerInclusive' => true, 'upperInclusive' => true], \JSON_THROW_ON_ERROR),
-            json_encode($range, \JSON_THROW_ON_ERROR)
-        );
+        self::assertIsJsonReconstructable($range);
     }
 
     #[Test]
@@ -85,40 +76,14 @@ final class VersionRangeTest extends TestCase
         self::assertSame('1.0.0.0', (string) $range->lowerBound);
         self::assertSame('2.0.0.0', (string) $range->upperBound);
         self::assertSame('>1.0.0.0 - <2.0.0.0', $range->toNormalizedStr());
-        self::assertJsonStringEqualsJsonString(
-            json_encode(['lower' => $range->lowerBound, 'upper' => $range->upperBound, 'lowerInclusive' => $range->lowerInclusive, 'upperInclusive' => $range->upperInclusive], \JSON_THROW_ON_ERROR),
-            json_encode($range, \JSON_THROW_ON_ERROR)
-        );
+        self::assertIsJsonReconstructable($range);
 
         $range = VersionRange::createFromString('^1.0');
         self::assertSame('>=1.0.0.0 <2.0.0.0', (string) $range);
         self::assertSame('1.0.0.0', (string) $range->lowerBound);
         self::assertSame('2.0.0.0', (string) $range->upperBound);
         self::assertSame('1.0.0.0 - <2.0.0.0', $range->toNormalizedStr());
-        self::assertJsonStringEqualsJsonString(
-            json_encode(['lower' => $range->lowerBound, 'upper' => $range->upperBound, 'lowerInclusive' => $range->lowerInclusive, 'upperInclusive' => $range->upperInclusive], \JSON_THROW_ON_ERROR),
-            json_encode($range, \JSON_THROW_ON_ERROR)
-        );
-    }
-
-    #[Test]
-    public function it_creates_from_array(): void
-    {
-        $range = VersionRange::createFromString('>1.0, <2.0');
-        self::assertSame('>1.0.0.0 <2.0.0.0', (string) $range);
-        self::assertEquals($range, VersionRange::fromArray(json_decode(json_encode($range, \JSON_THROW_ON_ERROR), true)));
-
-        $range = VersionRange::createFromString('>=1.0, <=2.0');
-        self::assertSame('>=1.0.0.0 <=2.0.0.0', (string) $range);
-        self::assertEquals($range, VersionRange::fromArray(json_decode(json_encode($range, \JSON_THROW_ON_ERROR), true)));
-
-        $range = VersionRange::createFromString('>=1.0, <2.0');
-        self::assertSame('>=1.0.0.0 <2.0.0.0', (string) $range);
-        self::assertEquals($range, VersionRange::fromArray(json_decode(json_encode($range, \JSON_THROW_ON_ERROR), true)));
-
-        $range = VersionRange::createFromString('>1.0, <=2.0');
-        self::assertSame('>1.0.0.0 <=2.0.0.0', (string) $range);
-        self::assertEquals($range, VersionRange::fromArray(json_decode(json_encode($range, \JSON_THROW_ON_ERROR), true)));
+        self::assertIsJsonReconstructable($range);
     }
 
     #[Test]
@@ -131,10 +96,7 @@ final class VersionRangeTest extends TestCase
         self::assertFalse($range->upperInclusive);
         self::assertSame('>1.0', (string) $range);
         self::assertSame('>1.0', $range->toNormalizedStr());
-        self::assertJsonStringEqualsJsonString(
-            json_encode(['lower' => $range->lowerBound, 'upper' => $range->upperBound, 'lowerInclusive' => $range->lowerInclusive, 'upperInclusive' => $range->upperInclusive], \JSON_THROW_ON_ERROR),
-            json_encode($range, \JSON_THROW_ON_ERROR)
-        );
+        self::assertIsJsonReconstructable($range);
 
         $range = VersionRange::createFromConstraint(new Constraint(Constraint::STR_OP_LT, '1.0'));
         self::assertNull($range->lowerBound);
@@ -143,10 +105,7 @@ final class VersionRangeTest extends TestCase
         self::assertFalse($range->upperInclusive);
         self::assertSame('<1.0', (string) $range);
         self::assertSame('<1.0', $range->toNormalizedStr());
-        self::assertJsonStringEqualsJsonString(
-            json_encode(['lower' => $range->lowerBound, 'upper' => $range->upperBound, 'lowerInclusive' => $range->lowerInclusive, 'upperInclusive' => $range->upperInclusive], \JSON_THROW_ON_ERROR),
-            json_encode($range, \JSON_THROW_ON_ERROR)
-        );
+        self::assertIsJsonReconstructable($range);
 
         $range = VersionRange::createFromConstraint(new Constraint(Constraint::STR_OP_GE, '1.0'));
         self::assertSame('1.0', (string) $range->lowerBound);
@@ -155,10 +114,7 @@ final class VersionRangeTest extends TestCase
         self::assertFalse($range->upperInclusive);
         self::assertSame('>=1.0', (string) $range);
         self::assertSame('>=1.0', $range->toNormalizedStr());
-        self::assertJsonStringEqualsJsonString(
-            json_encode(['lower' => $range->lowerBound, 'upper' => $range->upperBound, 'lowerInclusive' => $range->lowerInclusive, 'upperInclusive' => $range->upperInclusive], \JSON_THROW_ON_ERROR),
-            json_encode($range, \JSON_THROW_ON_ERROR)
-        );
+        self::assertIsJsonReconstructable($range);
 
         $range = VersionRange::createFromConstraint(new Constraint(Constraint::STR_OP_LE, '1.0'));
         self::assertNull($range->lowerBound);
@@ -167,10 +123,7 @@ final class VersionRangeTest extends TestCase
         self::assertTrue($range->upperInclusive);
         self::assertSame('<=1.0', (string) $range);
         self::assertSame('<=1.0', $range->toNormalizedStr());
-        self::assertJsonStringEqualsJsonString(
-            json_encode(['lower' => $range->lowerBound, 'upper' => $range->upperBound, 'lowerInclusive' => $range->lowerInclusive, 'upperInclusive' => $range->upperInclusive], \JSON_THROW_ON_ERROR),
-            json_encode($range, \JSON_THROW_ON_ERROR)
-        );
+        self::assertIsJsonReconstructable($range);
     }
 
     #[Test]
@@ -348,7 +301,7 @@ final class VersionRangeTest extends TestCase
     public function it_fails_from_array_with_unexpected_keys(): void
     {
         $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessageContains('Invalid version range data, unexpected keys found: "format", "constraint".');
+        $this->expectExceptionMessageContains('Invalid version range data, unexpected keys provided: "format", "constraint".');
 
         /** @phpstan-ignore-next-line */
         VersionRange::fromArray(['lower' => '1.0', 'format' => true, 'constraint' => 1]);
@@ -362,5 +315,25 @@ final class VersionRangeTest extends TestCase
         } else {
             $this->expectExceptionMessage($message);
         }
+    }
+
+    private static function assertIsJsonReconstructable(VersionRange $range): void
+    {
+        self::assertJsonStringEqualsJsonString(
+            json_encode(['lower' => $range->lowerBound, 'upper' => $range->upperBound, 'lowerInclusive' => $range->lowerInclusive, 'upperInclusive' => $range->upperInclusive], \JSON_THROW_ON_ERROR),
+            json_encode($range, \JSON_THROW_ON_ERROR)
+        );
+
+        self::assertEquals(
+            $range,
+            VersionRange::fromArray(
+                json_decode(
+                    json_encode($range, \JSON_THROW_ON_ERROR),
+                    associative: true,
+                    depth: 5,
+                    flags: \JSON_THROW_ON_ERROR,
+                ),
+            ),
+        );
     }
 }

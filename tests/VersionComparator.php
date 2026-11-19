@@ -33,6 +33,22 @@ final class VersionComparator extends Comparator
         \assert($expected instanceof Version);
         \assert($actual instanceof Version);
 
+        if ($expected->relative !== $actual->relative) {
+            $exporter = new Exporter();
+
+            throw new ComparisonFailure(
+                $expected,
+                $actual,
+                $exporter->export($expected),
+                $exporter->export($actual),
+                \sprintf(
+                    'Relative "%s" is not the same as "%s".',
+                    $actual->relative ?? 'empty',
+                    $expected->relative ?? 'empty',
+                ),
+            );
+        }
+
         if (! $expected->equalTo($actual, $expected->build === null)) {
             $exporter = new Exporter();
 
