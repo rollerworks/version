@@ -366,6 +366,33 @@ class VersionTest extends TestCase
             'output_format' => $version->outputFormat,
             'format_of_increment' => $version->outputFormatOfIncrement,
         ], $version->__debugInfo());
+
+        $version = Version::fromString('1.x-dev', options: Version::INPUT_ALLOW_RELATIVE);
+        self::assertEquals(1, $version->major);
+        self::assertEquals(9999999, $version->minor);
+        self::assertNull($version->patch);
+        self::assertNull($version->build);
+        self::assertEquals(Stability::Stable, $version->stability);
+        self::assertEquals(0, $version->preRelease);
+        self::assertEquals('1.x', $version->relative);
+        self::assertEquals('1.9999999.0.0', $version->full);
+        self::assertEquals('1.9999999.0', $version->fullWithoutBuild);
+        self::assertEquals('1.x', $version->formatted);
+        self::assertVersionIsJsonReconstructable($version);
+        self::assertEquals([
+            'formatted' => $version->formatted,
+            'full' => $version->full,
+            'version' => [
+                'major' => 1,
+                'minor' => 9999999,
+                'patch' => null,
+                'build' => null,
+                'stability' => Stability::Stable,
+                'pre_release' => 0,
+            ],
+            'output_format' => $version->outputFormat,
+            'format_of_increment' => $version->outputFormatOfIncrement,
+        ], $version->__debugInfo());
     }
 
     #[Test]
@@ -867,7 +894,7 @@ class VersionTest extends TestCase
     public function it_fails_for_invalid_relative_version(): void
     {
         $this->expectException('InvalidArgumentException');
-        $this->expectExceptionMessageContains('Unable to parse version "x.0.0", unexpected relative format. Expected a SemVer compatible relative version, major must be "fixed" like "1.x" or "1.*".');
+        $this->expectExceptionMessageContains('Unable to parse version "x.0.0", unexpected relative format. Expected a SemVer compatible relative version, major must be "fixed" like "1.x", "1.*", "1.x-dev".');
 
         Version::fromString('x.0.0', options: Version::INPUT_ALLOW_RELATIVE);
     }
@@ -876,7 +903,7 @@ class VersionTest extends TestCase
     public function it_fails_for_invalid_relative_version_with_pre_release(): void
     {
         $this->expectException('InvalidArgumentException');
-        $this->expectExceptionMessageContains('Unable to parse version "5.0.x-beta1", unexpected relative format. Expected a SemVer compatible relative version, major must be "fixed" like "1.x" or "1.*".');
+        $this->expectExceptionMessageContains('Unable to parse version "5.0.x-beta1", unexpected relative format. Expected a SemVer compatible relative version, major must be "fixed" like "1.x", "1.*", "1.x-dev".');
 
         Version::fromString('5.0.x-beta1', options: Version::INPUT_ALLOW_RELATIVE);
     }
