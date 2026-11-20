@@ -620,8 +620,8 @@ final class Version implements \Stringable, \JsonSerializable
             throw new \InvalidArgumentException(\sprintf('Unable to parse version "%s" Expects an SemVer compatible version. Relative versions are not allowed, try adding the "INPUT_ALLOW_RELATIVE" option.', $version));
         }
 
-        if (! preg_match(\sprintf('{^[vV]?%s$}', self::RELATIVE_VERSION_REGEX), $version, $matches)) {
-            throw new \InvalidArgumentException(\sprintf('Unable to parse version "%s", unexpected relative format. Expected a SemVer compatible relative version, major must be "fixed" like "1.x" or "1.*".', $version));
+        if (! preg_match(\sprintf('{^[vV]?%s(?:-dev)?$}', self::RELATIVE_VERSION_REGEX), $version, $matches)) {
+            throw new \InvalidArgumentException(\sprintf('Unable to parse version "%s", unexpected relative format. Expected a SemVer compatible relative version, major must be "fixed" like "1.x", "1.*", "1.x-dev".', $version));
         }
 
         $relative = $version = $matches['major'];
