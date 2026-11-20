@@ -1,0 +1,18 @@
+---------------------------------------------------------------------------
+
+by sstok at 2026-11-20T19:13:35Z
+
+```
+$ project-manager organization:check -vvv
+
+Check Projects Compatibility
+============================
+
+ - Checking hupkit... (< 1 ms, 14.0 MiB)
+In Version.php line 624:
+
+  [InvalidArgumentException]
+  Unable to parse version "3.x-dev", unexpected relative format. Expected a SemVer compatible relative version, major must be "fixed" like "1.x" or "1.*".
+
+```
+
