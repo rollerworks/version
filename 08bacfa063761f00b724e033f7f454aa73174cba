@@ -1,0 +1,1 @@
+{"schema":1,"id":23,"category":"bug","title":"Fix relative version should allow -dev suffix","flags":[],"authors":["sstok"]}
